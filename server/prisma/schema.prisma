@@ -1,0 +1,54 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model ItineraryItem {
+  id            String   @id @default(uuid())
+  destinationId String
+  name          String
+  category      String
+  city          String
+  country       String
+  lat           Float
+  lng           Float
+  imageUrl      String?
+  dayNumber     Int      @default(1)
+  sortOrder     Int      @default(0)
+  notes         String?
+  isMustVisit   Boolean  @default(false)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  @@unique([destinationId, dayNumber])
+  @@index([dayNumber, sortOrder])
+}
+
+model Favorite {
+  id            String   @id @default(uuid())
+  destinationId String   @unique
+  name          String
+  category      String
+  city          String
+  country       String
+  lat           Float
+  lng           Float
+  imageUrl      String?
+  rating        Float?
+  address       String?
+  createdAt     DateTime @default(now())
+}
+
+model SharedItinerary {
+  id          String    @id @default(uuid())
+  shareId     String    @unique
+  title       String
+  description String?
+  tripData    String    // JSON encoded itinerary payload
+  createdAt   DateTime  @default(now())
+  expiresAt   DateTime?
+}

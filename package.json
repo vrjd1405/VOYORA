@@ -1,0 +1,22 @@
+{
+  "name": "voyora-monorepo",
+  "version": "1.0.0",
+  "description": "VOYORA — Luxury Smart Travel Planning Web Application",
+  "scripts": {
+    "dev": "concurrently -n \"SERVER,CLIENT\" -c \"blue,cyan\" \"npm run dev:server\" \"npm run dev:client\"",
+    "dev:server": "cd server && npm run dev",
+    "dev:client": "cd client && npm run dev",
+    "build": "cd server && npm run build && cd ../client && npm run build",
+    "build:client": "cd client && npm run build",
+    "build:server": "cd server && npm run build",
+    "start": "cd server && npm start",
+    "prisma:generate": "cd server && npm run prisma:generate",
+    "prisma:migrate": "cd server && npm run prisma:migrate",
+    "prisma:push": "cd server && npm run prisma:push",
+    "test": "npm run test:api",
+    "test:api": "node test-suite.js"
+  },
+  "devDependencies": {
+    "concurrently": "^9.2.5"
+  }
+}
