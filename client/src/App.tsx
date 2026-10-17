@@ -12,9 +12,14 @@ import { SmartPlannerPage } from './pages/SmartPlannerPage';
 import { FavoritesPage } from './pages/FavoritesPage';
 import { SharedTripPage } from './pages/SharedTripPage';
 import Galaxy from './components/Galaxy';
+import { CurrencyBudgetModal } from './components/CurrencyBudgetModal';
+import { SmartPackingModal } from './components/SmartPackingModal';
+import { Calculator, Luggage } from 'lucide-react';
 
 export const AppContent: React.FC = () => {
   const [currentPath, setCurrentPath] = useState<string>(window.location.pathname + window.location.search);
+  const [isCurrencyModalOpen, setIsCurrencyModalOpen] = useState(false);
+  const [isPackingModalOpen, setIsPackingModalOpen] = useState(false);
 
   useEffect(() => {
     const handlePopState = () => {
@@ -78,7 +83,7 @@ export const AppContent: React.FC = () => {
   };
 
   return (
-    <div className="voyora-app-shell relative min-h-screen">
+    <div className="voyora-app-shell relative min-h-screen bg-[#0a0f1d]">
       {/* React Bits Interactive WebGL2 Galaxy Background */}
       <Galaxy
         starColors={['#38BDF8', '#818CF8', '#C084FC', '#E2E8F0']}
@@ -95,7 +100,6 @@ export const AppContent: React.FC = () => {
         rotationSpeed={0.04}
         layers={5}
         transparent={true}
-        className="fixed inset-0 pointer-events-none -z-10"
       />
       <Navbar currentPath={currentPath} onNavigate={navigate} />
       <main className="voyora-main-content relative z-10">
@@ -103,11 +107,45 @@ export const AppContent: React.FC = () => {
       </main>
       <Footer onNavigate={navigate} />
 
+      {/* Floating Travel Quick-Utility Bar */}
+      <div className="fixed bottom-6 right-6 z-40 flex items-center gap-2.5">
+        <button
+          onClick={() => setIsCurrencyModalOpen(true)}
+          className="px-3.5 py-2.5 rounded-full bg-slate-900/90 hover:bg-slate-800 border border-slate-700/80 text-sky-400 hover:text-white text-xs font-bold shadow-xl backdrop-blur-md transition-all transform hover:scale-105 flex items-center gap-1.5"
+          title="Open Currency Converter & Budget Calculator"
+        >
+          <Calculator size={14} />
+          <span>Currency & Budget</span>
+        </button>
+
+        <button
+          onClick={() => setIsPackingModalOpen(true)}
+          className="px-3.5 py-2.5 rounded-full bg-slate-900/90 hover:bg-slate-800 border border-slate-700/80 text-emerald-400 hover:text-white text-xs font-bold shadow-xl backdrop-blur-md transition-all transform hover:scale-105 flex items-center gap-1.5"
+          title="Open Smart Packing Checklist"
+        >
+          <Luggage size={14} />
+          <span>Packing List</span>
+        </button>
+      </div>
+
+      {/* Currency & Budget Modal */}
+      <CurrencyBudgetModal
+        isOpen={isCurrencyModalOpen}
+        onClose={() => setIsCurrencyModalOpen(false)}
+      />
+
+      {/* Smart Packing Checklist Modal */}
+      <SmartPackingModal
+        isOpen={isPackingModalOpen}
+        onClose={() => setIsPackingModalOpen(false)}
+      />
+
       <style>{`
         .voyora-app-shell {
           display: flex;
           flex-direction: column;
           min-height: 100vh;
+          background-color: #0a0f1d;
         }
         .voyora-main-content {
           flex: 1;

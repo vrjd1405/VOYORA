@@ -44,7 +44,13 @@ export const HomePage: React.FC<HomePageProps> = ({ onNavigate }) => {
     { id: 'Historic', label: 'Historic Realms', count: '8+' },
   ];
 
-  const quickCities = ['Paris', 'Tokyo', 'Rome', 'Barcelona', 'Kyoto', 'Amalfi Coast'];
+  const [activeRegion, setActiveRegion] = useState<'tamil_nadu' | 'india' | 'global'>('tamil_nadu');
+
+  const regionCities = {
+    tamil_nadu: ['Madurai', 'Chennai', 'Ooty', 'Coimbatore', 'Mahabalipuram', 'Thanjavur', 'Kanyakumari', 'Rameswaram'],
+    india: ['Bengaluru', 'Delhi', 'Mumbai', 'Jaipur', 'Kochi'],
+    global: ['Paris', 'Tokyo', 'Rome', 'Barcelona', 'Kyoto', 'London'],
+  };
 
   return (
     <div className="home-page-root">
@@ -82,7 +88,7 @@ export const HomePage: React.FC<HomePageProps> = ({ onNavigate }) => {
                 type="text"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                placeholder="Search city, landmark, or vibe (e.g. Paris, Eiffel Tower, Zen)..."
+                placeholder="Search city, landmark, or vibe (e.g. Madurai, Meenakshi, Paris, Zen)..."
                 className="hero-search-input"
               />
             </div>
@@ -110,11 +116,47 @@ export const HomePage: React.FC<HomePageProps> = ({ onNavigate }) => {
             </button>
           </form>
 
-          {/* Quick Destination Pills */}
+          {/* Quick Destination Pills with Region Toggle */}
           <div className="hero-quick-cities animate-fade-in delay-300">
-            <span className="quick-label">Trending Now:</span>
+            <div className="flex items-center gap-2 mb-2 w-full">
+              <span className="quick-label">Explore Regions:</span>
+              <button
+                type="button"
+                onClick={() => setActiveRegion('tamil_nadu')}
+                className={`text-[11px] font-bold px-2.5 py-1 rounded-full transition ${
+                  activeRegion === 'tamil_nadu'
+                    ? 'bg-sky-500 text-slate-950 font-extrabold shadow-[0_0_12px_rgba(56,189,248,0.4)]'
+                    : 'bg-slate-800/80 text-slate-400 hover:text-white border border-slate-700/60'
+                }`}
+              >
+                Tamil Nadu
+              </button>
+              <button
+                type="button"
+                onClick={() => setActiveRegion('india')}
+                className={`text-[11px] font-bold px-2.5 py-1 rounded-full transition ${
+                  activeRegion === 'india'
+                    ? 'bg-sky-500 text-slate-950 font-extrabold shadow-[0_0_12px_rgba(56,189,248,0.4)]'
+                    : 'bg-slate-800/80 text-slate-400 hover:text-white border border-slate-700/60'
+                }`}
+              >
+                All India
+              </button>
+              <button
+                type="button"
+                onClick={() => setActiveRegion('global')}
+                className={`text-[11px] font-bold px-2.5 py-1 rounded-full transition ${
+                  activeRegion === 'global'
+                    ? 'bg-sky-500 text-slate-950 font-extrabold shadow-[0_0_12px_rgba(56,189,248,0.4)]'
+                    : 'bg-slate-800/80 text-slate-400 hover:text-white border border-slate-700/60'
+                }`}
+              >
+                Global Capitals
+              </button>
+            </div>
+
             <div className="quick-cities-list">
-              {quickCities.map(city => (
+              {regionCities[activeRegion].map(city => (
                 <button
                   key={city}
                   onClick={() => onNavigate(`/explore?city=${encodeURIComponent(city)}`)}
@@ -124,6 +166,24 @@ export const HomePage: React.FC<HomePageProps> = ({ onNavigate }) => {
                   <span>{city}</span>
                 </button>
               ))}
+            </div>
+
+            {/* Live Reliability Feature Badges */}
+            <div className="flex flex-wrap items-center gap-3 pt-3 mt-1 border-t border-slate-800/60 text-[11px] text-slate-400 w-full">
+              <span className="flex items-center gap-1 text-emerald-400 font-semibold">
+                <ShieldCheck size={13} />
+                <span>100% Strict City Isolation</span>
+              </span>
+              <span className="text-slate-600">•</span>
+              <span className="flex items-center gap-1 text-sky-400 font-semibold">
+                <CloudSun size={13} />
+                <span>Real Open-Meteo Satellite Weather</span>
+              </span>
+              <span className="text-slate-600">•</span>
+              <span className="flex items-center gap-1 text-violet-400 font-semibold">
+                <Compass size={13} />
+                <span>Geoapify Turn-by-Turn Transit</span>
+              </span>
             </div>
           </div>
         </div>

@@ -616,11 +616,24 @@ export const Galaxy: React.FC<GalaxyProps> = ({
   return (
     <div
       ref={containerRef}
-      className={['relative h-full w-full overflow-hidden', className].filter(Boolean).join(' ')}
-      style={style}
+      className={className || 'fixed inset-0 pointer-events-none -z-10 overflow-hidden'}
+      style={{
+        position: 'fixed',
+        inset: 0,
+        width: '100vw',
+        height: '100vh',
+        pointerEvents: 'none',
+        zIndex: -10,
+        backgroundColor: '#0a0f1d',
+        ...style,
+      }}
       {...rest}
     >
-      <canvas ref={canvasRef} className="absolute inset-0 block h-full w-full" aria-hidden="true" />
+      <canvas
+        ref={canvasRef}
+        style={{ width: '100%', height: '100%', display: 'block', background: 'transparent' }}
+        aria-hidden="true"
+      />
     </div>
   );
 };
