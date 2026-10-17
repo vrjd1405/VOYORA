@@ -1,15 +1,14 @@
 import React, { useState } from 'react';
-import { Compass, MapPin, Sparkles, Calendar, Heart, Menu, X, Plane } from 'lucide-react';
+import { Compass, MapPin, Sparkles, Calendar, Heart, Menu, X } from 'lucide-react';
 import { useTrip } from '../context/TripContext';
 import { useFavorites } from '../context/FavoritesContext';
 
 interface NavbarProps {
   currentPath: string;
   onNavigate: (path: string) => void;
-  onOpenGlobe?: () => void;
 }
 
-export const Navbar: React.FC<NavbarProps> = ({ currentPath, onNavigate, onOpenGlobe }) => {
+export const Navbar: React.FC<NavbarProps> = ({ currentPath, onNavigate }) => {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const { items: tripItems } = useTrip();
   const { favorites } = useFavorites();
@@ -70,19 +69,8 @@ export const Navbar: React.FC<NavbarProps> = ({ currentPath, onNavigate, onOpenG
           })}
         </nav>
 
-        {/* Action Button: Quick Trip CTA & 3D Globe */}
+        {/* Action Button: Quick Trip CTA */}
         <div className="navbar-actions">
-          {onOpenGlobe && (
-            <button
-              onClick={onOpenGlobe}
-              className="btn btn-secondary nav-globe-btn hidden lg:inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full border border-sky-500/30 text-sky-400 hover:bg-sky-500/10 text-xs font-semibold"
-              title="Launch 3D World Globe & Flight Orbit"
-            >
-              <Plane size={14} className="rotate-45" />
-              <span>3D Orbit</span>
-            </button>
-          )}
-
           <button 
             onClick={() => handleLinkClick('/planner')} 
             className="btn btn-primary nav-cta-btn"

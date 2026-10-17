@@ -1,18 +1,17 @@
 import React, { useState, useEffect } from 'react';
-import { Search, Compass, Sparkles, MapPin, Calendar, ArrowRight, ShieldCheck, CloudSun, FileDown, Plane } from 'lucide-react';
+import { Search, Compass, Sparkles, MapPin, Calendar, ArrowRight, ShieldCheck, CloudSun, FileDown } from 'lucide-react';
 import { Destination } from '../types';
 import * as api from '../services/api';
 import { DestinationCard } from '../components/DestinationCard';
 import { AddToTripModal } from '../components/AddToTripModal';
-import { GlobeIntroSlide } from '../components/GlobeIntroSlide';
-import { DestinationChooserSection } from '../components/DestinationChooserSection';
 
 interface HomePageProps {
   onNavigate: (path: string) => void;
-  onOpenGlobe?: () => void;
 }
 
-export const HomePage: React.FC<HomePageProps> = ({ onNavigate, onOpenGlobe }) => {
+export const HomePage: React.FC<HomePageProps> = ({ onNavigate }) => {
+  const [searchQuery, setSearchQuery] = useState('');
+  const [selectedCategory, setSelectedCategory] = useState('all');
   const [featuredDestinations, setFeaturedDestinations] = useState<Destination[]>([]);
   const [loading, setLoading] = useState(true);
   const [modalDest, setModalDest] = useState<Destination | null>(null);
@@ -28,28 +27,107 @@ export const HomePage: React.FC<HomePageProps> = ({ onNavigate, onOpenGlobe }) =
       });
   }, []);
 
-  const scrollToDestinations = () => {
-    const el = document.getElementById('voyora-destinations');
-    if (el) {
-      el.scrollIntoView({ behavior: 'smooth' });
-    }
+  const handleSearchSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    const queryParams = new URLSearchParams();
+    if (searchQuery.trim()) queryParams.set('q', searchQuery.trim());
+    if (selectedCategory && selectedCategory !== 'all') queryParams.set('category', selectedCategory);
+    onNavigate(`/explore?${queryParams.toString()}`);
   };
 
-  const scrollToGlobe = () => {
-    window.scrollTo({ top: 0, behavior: 'smooth' });
-  };
+  const categories = [
+    { id: 'all', label: 'All Experiences' },
+    { id: 'Landmark', label: 'Iconic Landmarks', count: '10+' },
+    { id: 'Culture & Museum', label: 'Culture & Art', count: '8+' },
+    { id: 'Nature & Park', label: 'Nature & Parks', count: '6+' },
+    { id: 'Coastal & Beach', label: 'Coastal & Beach', count: '5+' },
+    { id: 'Historic', label: 'Historic Realms', count: '8+' },
+  ];
+
+  const quickCities = ['Paris', 'Tokyo', 'Rome', 'Barcelona', 'Kyoto', 'Amalfi Coast'];
 
   return (
     <div className="home-page-root">
       {/* Cinematic Hero Section */}
-      {/* Slide 1: 3D Earth Globe Intro (Matches User Reference Image) */}
-      <GlobeIntroSlide onTravelClick={scrollToDestinations} />
+      <section className="hero-section">
+        <div className="hero-background-wrapper">
+          <img
+            src="https://images.unsplash.com/photo-1469854523086-cc02fe5d8800?auto=format&fit=crop&w=2000&q=85"
+            alt="Cinematic Global Travel"
+            className="hero-bg-image"
+          />
+          <div className="hero-gradient-overlay" />
+        </div>
 
-      {/* Slide 2: VOYORA Destination Chooser (Strict City Isolation & Real Data) */}
-      <DestinationChooserSection
-        onNavigate={onNavigate}
-        onScrollToGlobe={scrollToGlobe}
-      />
+        <div className="container hero-content-container">
+          <div className="hero-badge animate-fade-in">
+            <Sparkles size={14} className="text-sky-400" />
+            <span>THE NEXT GENERATION TRAVEL ARCHITECT</span>
+          </div>
+
+          <h1 className="hero-title animate-slide-up">
+            Discover More. <br />
+            <span className="hero-title-gradient">Travel Better.</span>
+          </h1>
+
+          <p className="hero-subtitle animate-slide-up delay-100">
+            Unleash bespoke global journeys with synchronized interactive cartography, real-time meteorological intelligence, and seamless day-by-day itinerary orchestration.
+          </p>
+
+          {/* Search Box */}
+          <form onSubmit={handleSearchSubmit} className="hero-search-glass-card animate-slide-up delay-200">
+            <div className="search-field-wrapper">
+              <Search size={20} className="search-icon" />
+              <input
+                type="text"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                placeholder="Search city, landmark, or vibe (e.g. Paris, Eiffel Tower, Zen)..."
+                className="hero-search-input"
+              />
+            </div>
+
+            <div className="search-divider" />
+
+            <div className="search-category-dropdown-wrap">
+              <select
+                value={selectedCategory}
+                onChange={(e) => setSelectedCategory(e.target.value)}
+                className="hero-category-select"
+                aria-label="Filter by category"
+              >
+                {categories.map(c => (
+                  <option key={c.id} value={c.id}>
+                    {c.label}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            <button type="submit" className="btn btn-primary hero-submit-btn">
+              <span>Explore</span>
+              <ArrowRight size={16} />
+            </button>
+          </form>
+
+          {/* Quick Destination Pills */}
+          <div className="hero-quick-cities animate-fade-in delay-300">
+            <span className="quick-label">Trending Now:</span>
+            <div className="quick-cities-list">
+              {quickCities.map(city => (
+                <button
+                  key={city}
+                  onClick={() => onNavigate(`/explore?city=${encodeURIComponent(city)}`)}
+                  className="quick-city-chip"
+                >
+                  <MapPin size={12} className="text-sky-400" />
+                  <span>{city}</span>
+                </button>
+              ))}
+            </div>
+          </div>
+        </div>
+      </section>
 
       {/* Featured Global Destinations Section */}
       <section className="section-featured container">
@@ -213,7 +291,7 @@ export const HomePage: React.FC<HomePageProps> = ({ onNavigate, onOpenGlobe }) =
         .home-page-root {
           display: flex;
           flex-direction: column;
-          gap: 0;
+          gap: 80px;
           padding-bottom: 80px;
         }
         .hero-section {

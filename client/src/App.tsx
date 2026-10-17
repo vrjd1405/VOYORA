@@ -12,11 +12,9 @@ import { SmartPlannerPage } from './pages/SmartPlannerPage';
 import { FavoritesPage } from './pages/FavoritesPage';
 import { SharedTripPage } from './pages/SharedTripPage';
 import Galaxy from './components/Galaxy';
-import { GlobeModal } from './components/GlobeModal';
 
 export const AppContent: React.FC = () => {
   const [currentPath, setCurrentPath] = useState<string>(window.location.pathname + window.location.search);
-  const [isGlobeOpen, setIsGlobeOpen] = useState<boolean>(false);
 
   useEffect(() => {
     const handlePopState = () => {
@@ -39,7 +37,7 @@ export const AppContent: React.FC = () => {
     const searchParams = new URLSearchParams(searchPart || '');
 
     if (pathPart === '/' || pathPart === '') {
-      return <HomePage onNavigate={navigate} onOpenGlobe={() => setIsGlobeOpen(true)} />;
+      return <HomePage onNavigate={navigate} />;
     }
 
     if (pathPart === '/explore') {
@@ -99,18 +97,11 @@ export const AppContent: React.FC = () => {
         transparent={true}
         className="fixed inset-0 pointer-events-none -z-10"
       />
-      <Navbar currentPath={currentPath} onNavigate={navigate} onOpenGlobe={() => setIsGlobeOpen(true)} />
+      <Navbar currentPath={currentPath} onNavigate={navigate} />
       <main className="voyora-main-content relative z-10">
         {parseRoute()}
       </main>
       <Footer onNavigate={navigate} />
-
-      {/* 3D Earth Globe & Orbiting Airplane Modal */}
-      <GlobeModal
-        isOpen={isGlobeOpen}
-        onClose={() => setIsGlobeOpen(false)}
-        onTravelNext={() => navigate('/explore')}
-      />
 
       <style>{`
         .voyora-app-shell {
