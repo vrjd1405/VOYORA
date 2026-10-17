@@ -11,9 +11,12 @@ import { MyTripPage } from './pages/MyTripPage';
 import { SmartPlannerPage } from './pages/SmartPlannerPage';
 import { FavoritesPage } from './pages/FavoritesPage';
 import { SharedTripPage } from './pages/SharedTripPage';
+import Galaxy from './components/Galaxy';
+import { GlobeModal } from './components/GlobeModal';
 
 export const AppContent: React.FC = () => {
   const [currentPath, setCurrentPath] = useState<string>(window.location.pathname + window.location.search);
+  const [isGlobeOpen, setIsGlobeOpen] = useState<boolean>(false);
 
   useEffect(() => {
     const handlePopState = () => {
@@ -36,7 +39,7 @@ export const AppContent: React.FC = () => {
     const searchParams = new URLSearchParams(searchPart || '');
 
     if (pathPart === '/' || pathPart === '') {
-      return <HomePage onNavigate={navigate} />;
+      return <HomePage onNavigate={navigate} onOpenGlobe={() => setIsGlobeOpen(true)} />;
     }
 
     if (pathPart === '/explore') {
@@ -77,12 +80,37 @@ export const AppContent: React.FC = () => {
   };
 
   return (
-    <div className="voyora-app-shell">
-      <Navbar currentPath={currentPath} onNavigate={navigate} />
-      <main className="voyora-main-content">
+    <div className="voyora-app-shell relative min-h-screen">
+      {/* React Bits Interactive WebGL2 Galaxy Background */}
+      <Galaxy
+        starColors={['#38BDF8', '#818CF8', '#C084FC', '#E2E8F0']}
+        density={2.2}
+        glowIntensity={0.35}
+        flareIntensity={0.9}
+        starSpeed={0.22}
+        mouseRepulsion={true}
+        repulsionStrength={2.2}
+        clickWarp={true}
+        starSize={0.85}
+        twinkleIntensity={0.2}
+        speed={0.42}
+        rotationSpeed={0.04}
+        layers={5}
+        transparent={true}
+        className="fixed inset-0 pointer-events-none -z-10"
+      />
+      <Navbar currentPath={currentPath} onNavigate={navigate} onOpenGlobe={() => setIsGlobeOpen(true)} />
+      <main className="voyora-main-content relative z-10">
         {parseRoute()}
       </main>
       <Footer onNavigate={navigate} />
+
+      {/* 3D Earth Globe & Orbiting Airplane Modal */}
+      <GlobeModal
+        isOpen={isGlobeOpen}
+        onClose={() => setIsGlobeOpen(false)}
+        onTravelNext={() => navigate('/explore')}
+      />
 
       <style>{`
         .voyora-app-shell {

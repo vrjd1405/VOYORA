@@ -8,6 +8,7 @@ import { MapView } from '../components/MapView';
 import { EmptyState } from '../components/EmptyState';
 import { ItinerarySkeleton } from '../components/LoadingSkeleton';
 import { generateItineraryPdf } from '../services/pdfExport';
+import { TransitRouteBadge } from '../components/TransitRouteBadge';
 import * as api from '../services/api';
 
 interface MyTripPageProps {
@@ -240,16 +241,20 @@ export const MyTripPage: React.FC<MyTripPageProps> = ({ onNavigate }) => {
 
                 <div className="day-items-list">
                   {group.items.map((item: any, idx: number) => (
-                    <DayItineraryCard
-                      key={item.id}
-                      item={item}
-                      totalDays={stats.totalDays}
-                      isFirst={idx === 0}
-                      isLast={idx === group.items.length - 1}
-                      onMoveUp={() => handleMoveOrder(group.items, idx, 'up')}
-                      onMoveDown={() => handleMoveOrder(group.items, idx, 'down')}
-                      onNavigate={onNavigate}
-                    />
+                    <React.Fragment key={item.id}>
+                      <DayItineraryCard
+                        item={item}
+                        totalDays={stats.totalDays}
+                        isFirst={idx === 0}
+                        isLast={idx === group.items.length - 1}
+                        onMoveUp={() => handleMoveOrder(group.items, idx, 'up')}
+                        onMoveDown={() => handleMoveOrder(group.items, idx, 'down')}
+                        onNavigate={onNavigate}
+                      />
+                      {idx < group.items.length - 1 && (
+                        <TransitRouteBadge from={item} to={group.items[idx + 1]} />
+                      )}
+                    </React.Fragment>
                   ))}
                 </div>
               </div>

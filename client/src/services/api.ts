@@ -240,3 +240,31 @@ export async function getSharedItinerary(shareId: string): Promise<any> {
   if (!res.ok) throw new Error(json.error || 'Shared trip not found');
   return json.data;
 }
+
+export async function fetchRouteTransit(
+  fromLat: number,
+  fromLng: number,
+  toLat: number,
+  toLng: number,
+  mode: 'drive' | 'walk' | 'bicycle' = 'drive'
+): Promise<{
+  distanceMeters: number;
+  distanceKm: number;
+  timeSeconds: number;
+  timeMinutes: number;
+  mode: string;
+  summary: string;
+}> {
+  const query = new URLSearchParams({
+    fromLat: fromLat.toString(),
+    fromLng: fromLng.toString(),
+    toLat: toLat.toString(),
+    toLng: toLng.toString(),
+    mode,
+  });
+  const res = await fetch(`${API_BASE}/destinations/route?${query.toString()}`);
+  if (!res.ok) throw new Error('Failed to calculate route');
+  const json = await res.json();
+  return json.data;
+}
+

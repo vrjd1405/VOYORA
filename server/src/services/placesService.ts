@@ -1,7 +1,8 @@
 import { Destination } from '../types/index.js';
+import { INDIAN_DESTINATIONS } from './curatedIndianDestinations.js';
 
 // Curated verified global destinations with authentic coordinates, addresses, and high-res imagery
-export const VERIFIED_DESTINATIONS: Destination[] = [
+const GLOBAL_DESTINATIONS: Destination[] = [
   {
     id: "dest_paris_eiffel",
     name: "Eiffel Tower",
@@ -580,6 +581,82 @@ export const VERIFIED_DESTINATIONS: Destination[] = [
   }
 ];
 
+// Combine global curated destinations with comprehensive authentic Indian / Tamil Nadu destinations
+export const VERIFIED_DESTINATIONS: Destination[] = [
+  ...GLOBAL_DESTINATIONS,
+  ...INDIAN_DESTINATIONS
+];
+
+/**
+ * Robust city and alias matching with 100% strict regional isolation.
+ * Supports Chennai/Madras, Madurai, Coimbatore/Kovai, Mahabalipuram/Mamallapuram,
+ * Thanjavur/Tanjore, Kanyakumari, Ooty/Udhagamandalam, Kodaikanal, Rameswaram,
+ * Tiruchirappalli/Trichy, Kanchipuram, Bengaluru/Bangalore, Mumbai/Bombay, Delhi, etc.
+ */
+export function matchesCity(destCity: string, filterCity: string, tags?: string[]): boolean {
+  const normDest = destCity.trim().toLowerCase();
+  const normFilter = filterCity.trim().toLowerCase();
+  if (!normFilter || normFilter === 'all') return true;
+  if (normDest === normFilter) return true;
+
+  const aliasMap: Record<string, string[]> = {
+    'chennai': ['madras', 'chennai', 'mylapore', 'triplicane', 'besant nagar'],
+    'madras': ['chennai', 'madras'],
+    'madurai': ['madurai'],
+    'coimbatore': ['coimbatore', 'kovai'],
+    'kovai': ['coimbatore', 'kovai'],
+    'mahabalipuram': ['mahabalipuram', 'mamallapuram'],
+    'mamallapuram': ['mahabalipuram', 'mamallapuram'],
+    'thanjavur': ['thanjavur', 'tanjore'],
+    'tanjore': ['thanjavur', 'tanjore'],
+    'kanyakumari': ['kanyakumari', 'cape comorin'],
+    'ooty': ['ooty', 'udhagamandalam', 'nilgiris'],
+    'udhagamandalam': ['ooty', 'udhagamandalam', 'nilgiris'],
+    'kodaikanal': ['kodaikanal', 'kodai'],
+    'kodai': ['kodaikanal', 'kodai'],
+    'rameswaram': ['rameswaram', 'rameshwaram'],
+    'rameshwaram': ['rameswaram', 'rameshwaram'],
+    'tiruchirappalli': ['tiruchirappalli', 'trichy', 'srirangam'],
+    'trichy': ['tiruchirappalli', 'trichy', 'srirangam'],
+    'kanchipuram': ['kanchipuram', 'kanchi'],
+    'kanchi': ['kanchipuram', 'kanchi'],
+    'bengaluru': ['bengaluru', 'bangalore'],
+    'bangalore': ['bengaluru', 'bangalore'],
+    'mumbai': ['mumbai', 'bombay'],
+    'bombay': ['mumbai', 'bombay'],
+    'delhi': ['delhi', 'new delhi'],
+    'new delhi': ['delhi', 'new delhi'],
+    'jaipur': ['jaipur', 'pink city'],
+    'kochi': ['kochi', 'cochin', 'fort kochi'],
+    'cochin': ['kochi', 'cochin', 'fort kochi'],
+    'varanasi': ['varanasi', 'banaras', 'kashi'],
+    'banaras': ['varanasi', 'banaras', 'kashi'],
+    'kashi': ['varanasi', 'banaras', 'kashi'],
+    'hyderabad': ['hyderabad'],
+    'agra': ['agra'],
+    'goa': ['goa', 'panaji', 'old goa', 'candolim', 'calangute']
+  };
+
+  const aliases = aliasMap[normFilter];
+  if (aliases) {
+    if (aliases.some(a => normDest === a || normDest.includes(a) || a.includes(normDest))) {
+      return true;
+    }
+    if (tags && tags.some(t => aliases.includes(t.toLowerCase()))) {
+      return true;
+    }
+  } else {
+    if (normDest.includes(normFilter) || normFilter.includes(normDest)) {
+      return true;
+    }
+    if (tags && tags.some(t => t.toLowerCase() === normFilter)) {
+      return true;
+    }
+  }
+
+  return false;
+}
+
 // In-memory cache for on-the-fly discovered places across any global city
 export const DYNAMIC_DESTINATIONS_CACHE = new Map<string, Destination>();
 
@@ -607,6 +684,80 @@ async function fetchUnsplashPhoto(term: string): Promise<string | null> {
 /**
  * Live Geoapify Places & Geocoding integration with Unsplash high-res photography
  */
+async function fetchCityPlacesFromGeoapify(cityName: string, preferredCategory?: string): Promise<Destination[]> {
+  const geoapifyKey = process.env.GEOAPIFY_API_KEY || '715d707e4ce3492c8ac0a46675cdace9';
+  if (!geoapifyKey) return [];
+
+  try {
+    // 1. Geocode the city center
+    const geocodeUrl = `https://api.geoapify.com/v1/geocode/search?text=${encodeURIComponent(cityName)}&apiKey=${geoapifyKey}&limit=1`;
+    const geoRes = await fetch(geocodeUrl);
+    if (!geoRes.ok) return [];
+    const geoData = (await geoRes.json()) as any;
+    if (!geoData.features || geoData.features.length === 0) return [];
+
+    const cityFeature = geoData.features[0];
+    const [cityLng, cityLat] = cityFeature.geometry.coordinates;
+    const resolvedCity = cityFeature.properties.city || cityFeature.properties.name || cityName;
+    const resolvedCountry = cityFeature.properties.country || 'India';
+
+    // 2. Query Geoapify Places strictly within 25km radius of this specific city center
+    const placesUrl = `https://api.geoapify.com/v2/places?categories=tourism.sights,tourism.attraction,heritage,entertainment.culture,leisure.park&filter=circle:${cityLng},${cityLat},25000&limit=15&apiKey=${geoapifyKey}`;
+    const placesRes = await fetch(placesUrl);
+    if (!placesRes.ok) return [];
+    const placesData = (await placesRes.json()) as any;
+    if (!placesData.features || placesData.features.length === 0) return [];
+
+    const results: Destination[] = [];
+    for (const f of placesData.features) {
+      const p = f.properties;
+      const rawName = p.name || (p.formatted ? p.formatted.split(',')[0].trim() : '');
+      if (!rawName || rawName === 'undefined') continue;
+
+      const placeId = `geo_${p.place_id || Math.random().toString(36).slice(2, 8)}`;
+      if (DYNAMIC_DESTINATIONS_CACHE.has(placeId)) {
+        results.push(DYNAMIC_DESTINATIONS_CACHE.get(placeId)!);
+        continue;
+      }
+
+      let category = preferredCategory || 'Landmark';
+      const cats: string[] = p.categories || [];
+      if (cats.some((c: string) => c.includes('museum') || c.includes('culture'))) category = 'Culture & Museum';
+      else if (cats.some((c: string) => c.includes('park') || c.includes('nature'))) category = 'Nature & Park';
+      else if (cats.some((c: string) => c.includes('beach'))) category = 'Coastal & Beach';
+      else if (cats.some((c: string) => c.includes('heritage') || c.includes('historic'))) category = 'Historic';
+
+      let imageUrl = await fetchUnsplashPhoto(`${rawName} ${resolvedCity}`);
+      if (!imageUrl) {
+        imageUrl = 'https://images.unsplash.com/photo-1582510003544-4d00b7f74220?auto=format&fit=crop&w=1200&q=85';
+      }
+
+      const dest: Destination = {
+        id: placeId,
+        name: rawName,
+        category,
+        city: resolvedCity,
+        country: resolvedCountry,
+        lat: f.geometry.coordinates[1],
+        lng: f.geometry.coordinates[0],
+        imageUrl,
+        rating: 4.7,
+        address: p.formatted || `${rawName}, ${resolvedCity}, ${resolvedCountry}`,
+        description: `${rawName} is a verified cultural and historical attraction in ${resolvedCity}, ${resolvedCountry}. Verified through Geoapify cartography.`,
+        tags: [resolvedCity.toLowerCase(), resolvedCountry.toLowerCase(), category.toLowerCase(), 'geoapify-verified']
+      };
+
+      DYNAMIC_DESTINATIONS_CACHE.set(placeId, dest);
+      results.push(dest);
+    }
+
+    return results;
+  } catch (err) {
+    console.warn('Geoapify city places fetch error:', err);
+    return [];
+  }
+}
+
 async function fetchFromGeoapify(query: string, preferredCategory?: string): Promise<Destination[]> {
   const geoapifyKey = process.env.GEOAPIFY_API_KEY || '715d707e4ce3492c8ac0a46675cdace9';
   if (!geoapifyKey) return [];
@@ -812,15 +963,32 @@ export async function searchPlaces(params: {
   }
 
   if (cityFilter && cityFilter !== 'all') {
-    filtered = filtered.filter(d => d.city.toLowerCase().includes(cityFilter));
+    filtered = filtered.filter(d => matchesCity(d.city, cityFilter, d.tags));
   }
 
   if (categoryFilter && categoryFilter !== 'all') {
     filtered = filtered.filter(d => d.category.toLowerCase() === categoryFilter.toLowerCase());
   }
 
-  // If query returned fewer than 2 results, perform live discovery using Geoapify + Unsplash + Wikipedia
-  if (query && filtered.length < 2) {
+  // If specific city selected has fewer than 2 results, perform live discovery specifically in that city
+  if (cityFilter && cityFilter !== 'all' && filtered.length < 2) {
+    const geoDiscovered = await fetchCityPlacesFromGeoapify(cityFilter, categoryFilter);
+    if (geoDiscovered.length > 0) {
+      for (const item of geoDiscovered) {
+        if (!filtered.some(f => f.id === item.id) && matchesCity(item.city, cityFilter, item.tags)) {
+          filtered.push(item);
+        }
+      }
+    } else {
+      const osmDiscovered = await fetchFromOSMAndWiki(`${cityFilter} attractions`, categoryFilter);
+      for (const item of osmDiscovered) {
+        if (!filtered.some(f => f.id === item.id) && matchesCity(item.city, cityFilter, item.tags)) {
+          filtered.push(item);
+        }
+      }
+    }
+  } else if (query && filtered.length < 2) {
+    // If query returned fewer than 2 results, perform live discovery
     const geoDiscovered = await fetchFromGeoapify(query, categoryFilter);
     if (geoDiscovered.length > 0) {
       for (const item of geoDiscovered) {
@@ -829,7 +997,6 @@ export async function searchPlaces(params: {
         }
       }
     } else {
-      // Fallback to OpenStreetMap Nominatim
       const osmDiscovered = await fetchFromOSMAndWiki(query, categoryFilter);
       for (const item of osmDiscovered) {
         if (!filtered.some(f => f.id === item.id)) {
@@ -837,23 +1004,12 @@ export async function searchPlaces(params: {
         }
       }
     }
-  } else if (cityFilter && cityFilter !== 'all' && filtered.length < 2) {
-    // If specific city selected has no places yet, discover places in that city
-    const geoDiscovered = await fetchFromGeoapify(`${cityFilter} tourism`, categoryFilter);
-    if (geoDiscovered.length > 0) {
-      for (const item of geoDiscovered) {
-        if (!filtered.some(f => f.id === item.id)) {
-          filtered.push(item);
-        }
-      }
-    } else {
-      const osmDiscovered = await fetchFromOSMAndWiki(`${cityFilter} tourism`, categoryFilter);
-      for (const item of osmDiscovered) {
-        if (!filtered.some(f => f.id === item.id)) {
-          filtered.push(item);
-        }
-      }
-    }
+  }
+
+  // ABSOLUTE 100% CITY ISOLATION:
+  // If a specific city filter was chosen, purge any item that does not belong to that city!
+  if (cityFilter && cityFilter !== 'all') {
+    filtered = filtered.filter(d => matchesCity(d.city, cityFilter, d.tags));
   }
 
   // Sorting

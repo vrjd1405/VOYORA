@@ -97,7 +97,30 @@ export const ExplorePage: React.FC<ExplorePageProps> = ({
   ];
 
   const cities = [
-    { id: 'all', label: 'Global (All Cities)' },
+    { id: 'all', label: 'All Destinations (Global & India)' },
+    // Tamil Nadu & South India
+    { id: 'Chennai', label: 'Chennai, Tamil Nadu' },
+    { id: 'Madurai', label: 'Madurai, Tamil Nadu' },
+    { id: 'Coimbatore', label: 'Coimbatore, Tamil Nadu' },
+    { id: 'Mahabalipuram', label: 'Mahabalipuram, Tamil Nadu' },
+    { id: 'Thanjavur', label: 'Thanjavur, Tamil Nadu' },
+    { id: 'Kanyakumari', label: 'Kanyakumari, Tamil Nadu' },
+    { id: 'Ooty', label: 'Ooty (Nilgiris), Tamil Nadu' },
+    { id: 'Kodaikanal', label: 'Kodaikanal, Tamil Nadu' },
+    { id: 'Rameswaram', label: 'Rameswaram, Tamil Nadu' },
+    { id: 'Tiruchirappalli', label: 'Tiruchirappalli (Trichy), Tamil Nadu' },
+    { id: 'Kanchipuram', label: 'Kanchipuram, Tamil Nadu' },
+    // Major Indian Hubs
+    { id: 'Bengaluru', label: 'Bengaluru, Karnataka' },
+    { id: 'Mumbai', label: 'Mumbai, Maharashtra' },
+    { id: 'Delhi', label: 'Delhi NCR, India' },
+    { id: 'Jaipur', label: 'Jaipur, Rajasthan' },
+    { id: 'Kochi', label: 'Kochi, Kerala' },
+    { id: 'Agra', label: 'Agra, Uttar Pradesh' },
+    { id: 'Varanasi', label: 'Varanasi, Uttar Pradesh' },
+    { id: 'Goa', label: 'Goa, India' },
+    { id: 'Hyderabad', label: 'Hyderabad, Telangana' },
+    // Premier Global Capitals
     { id: 'Paris', label: 'Paris, France' },
     { id: 'Tokyo', label: 'Tokyo, Japan' },
     { id: 'Rome', label: 'Rome, Italy' },
@@ -109,7 +132,6 @@ export const ExplorePage: React.FC<ExplorePageProps> = ({
     { id: 'Dubai', label: 'Dubai, UAE' },
     { id: 'Sydney', label: 'Sydney, Australia' },
     { id: 'Cairo', label: 'Cairo, Egypt' },
-    { id: 'Mumbai', label: 'Mumbai, India' },
     { id: 'Amsterdam', label: 'Amsterdam, Netherlands' },
     { id: 'Prague', label: 'Prague, Czechia' },
     { id: 'Seoul', label: 'Seoul, South Korea' },

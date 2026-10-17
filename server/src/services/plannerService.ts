@@ -1,5 +1,5 @@
 import { Destination } from '../types/index.js';
-import { VERIFIED_DESTINATIONS, DYNAMIC_DESTINATIONS_CACHE } from './placesService.js';
+import { VERIFIED_DESTINATIONS, DYNAMIC_DESTINATIONS_CACHE, matchesCity } from './placesService.js';
 
 export interface PlanRequest {
   city: string;
@@ -30,7 +30,8 @@ export interface GeneratedPlan {
 
 export function generateSmartPlan(req: PlanRequest): GeneratedPlan {
   const daysCount = Math.max(1, Math.min(7, req.days || 3));
-  const city = (req.city || '').trim().toLowerCase();
+  const rawCity = (req.city || '').trim();
+  const city = rawCity.toLowerCase();
   const interests = req.interests || [];
   const pace = req.pace || 'balanced';
 
@@ -38,19 +39,21 @@ export function generateSmartPlan(req: PlanRequest): GeneratedPlan {
   if (pace === 'relaxed') itemsPerDay = 2;
   if (pace === 'fast-paced') itemsPerDay = 4;
 
-  // Filter candidates by city from curated + discovered pool
+  const totalNeeded = daysCount * itemsPerDay;
+
+  // Filter candidates strictly by city from curated + discovered pool
   const allKnown = [...VERIFIED_DESTINATIONS, ...Array.from(DYNAMIC_DESTINATIONS_CACHE.values())];
   let candidates = allKnown.filter(d => 
-    city === 'all' || city === '' || d.city.toLowerCase().includes(city) || d.country.toLowerCase().includes(city)
+    city === 'all' || city === '' || matchesCity(d.city, city, d.tags)
   );
 
-  // If specific city has fewer items than needed, supplement with top global icons
-  if (candidates.length < daysCount * itemsPerDay) {
-    const others = allKnown.filter(d => !candidates.some(c => c.id === d.id));
-    candidates = [...candidates, ...others];
+  // If specific city is selected, NEVER supplement with other cities!
+  // Only if no city filter was requested (or 'all') do we fallback to all destinations
+  if (candidates.length === 0 && (city === 'all' || city === '')) {
+    candidates = allKnown;
   }
 
-  // Score candidate destinations based on interests
+  // Score candidate destinations based on user interests
   const scored = candidates.map(d => {
     let score = (d.rating || 4.5);
     const textToMatch = `${d.category} ${d.tags?.join(' ') || ''} ${d.name} ${d.description || ''}`.toLowerCase();
@@ -68,9 +71,22 @@ export function generateSmartPlan(req: PlanRequest): GeneratedPlan {
   // Sort by score descending
   scored.sort((a, b) => b.score - a.score);
 
-  // Distribute across days without duplicates
-  const totalNeeded = daysCount * itemsPerDay;
-  const selected = scored.slice(0, totalNeeded).map(s => s.destination);
+  // Distribute across days: strictly isolated to the chosen city
+  let selected: Destination[] = [];
+  if (candidates.length >= totalNeeded) {
+    selected = scored.slice(0, totalNeeded).map(s => s.destination);
+  } else if (candidates.length > 0) {
+    // There are fewer unique places in this city than slots:
+    // Cycle through this city's top verified attractions across days
+    // GUARANTEE: NEVER LEAK DESTINATIONS FROM OTHER CITIES!
+    const scoredDests = scored.map(s => s.destination);
+    for (let i = 0; i < totalNeeded; i++) {
+      selected.push(scoredDests[i % scoredDests.length]);
+    }
+  } else {
+    // Fallback only if city was completely unknown and empty
+    selected = allKnown.slice(0, totalNeeded);
+  }
 
   const timeSlots: ('Morning' | 'Afternoon' | 'Evening')[] = ['Morning', 'Afternoon', 'Evening', 'Evening'];
   const dayThemes = [

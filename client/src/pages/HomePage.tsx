@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Search, Compass, Sparkles, MapPin, Calendar, ArrowRight, ShieldCheck, CloudSun, FileDown } from 'lucide-react';
+import { Search, Compass, Sparkles, MapPin, Calendar, ArrowRight, ShieldCheck, CloudSun, FileDown, Plane } from 'lucide-react';
 import { Destination } from '../types';
 import * as api from '../services/api';
 import { DestinationCard } from '../components/DestinationCard';
@@ -7,9 +7,10 @@ import { AddToTripModal } from '../components/AddToTripModal';
 
 interface HomePageProps {
   onNavigate: (path: string) => void;
+  onOpenGlobe?: () => void;
 }
 
-export const HomePage: React.FC<HomePageProps> = ({ onNavigate }) => {
+export const HomePage: React.FC<HomePageProps> = ({ onNavigate, onOpenGlobe }) => {
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('all');
   const [featuredDestinations, setFeaturedDestinations] = useState<Destination[]>([]);
@@ -44,7 +45,7 @@ export const HomePage: React.FC<HomePageProps> = ({ onNavigate }) => {
     { id: 'Historic', label: 'Historic Realms', count: '8+' },
   ];
 
-  const quickCities = ['Paris', 'Tokyo', 'Rome', 'Barcelona', 'Kyoto', 'Amalfi Coast'];
+  const quickCities = ['Chennai', 'Madurai', 'Ooty', 'Mahabalipuram', 'Paris', 'Tokyo', 'Rome'];
 
   return (
     <div className="home-page-root">
@@ -124,6 +125,18 @@ export const HomePage: React.FC<HomePageProps> = ({ onNavigate }) => {
                   <span>{city}</span>
                 </button>
               ))}
+
+              {onOpenGlobe && (
+                <button
+                  type="button"
+                  onClick={onOpenGlobe}
+                  className="quick-city-chip bg-sky-500/20 border-sky-400/40 text-sky-300 font-semibold hover:bg-sky-500/30 transition shadow-[0_0_15px_rgba(56,189,248,0.3)]"
+                  title="Launch Interactive 3D World Globe & Orbiting Airplane"
+                >
+                  <Plane size={13} className="text-sky-400 rotate-45" />
+                  <span>3D World Orbit ✈</span>
+                </button>
+              )}
             </div>
           </div>
         </div>
