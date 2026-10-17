@@ -427,7 +427,7 @@ export async function generateSmartPlan(req: PlanRequest): Promise<GeneratedPlan
         country: countryName,
         lat: cityCoordLat + template.dLat,
         lng: cityCoordLng + template.dLng,
-        imageUrl: baseDest.imageUrl || 'https://images.unsplash.com/photo-1582510003544-4d00b7f74220?auto=format&fit=crop&w=1200&q=85',
+        imageUrl: baseDest.imageUrl || 'https://images.unsplash.com/photo-1488646953014-85cb44e25828?auto=format&fit=crop&w=1200&q=85',
         rating: 4.8,
         address: `${template.name}, ${cityName}, ${countryName}`,
         description: template.desc,
@@ -484,18 +484,31 @@ Format your response strictly as valid pure JSON with NO markdown backticks:
   ]
 }`;
 
-      const aiResponse = await ai.models.generateContent({
-        model: 'gemini-2.5-flash',
-        contents: prompt,
-        config: {
-          responseMimeType: 'application/json',
-          temperature: 0.3,
-        },
-      });
+      let aiResponse: any = null;
+      const candidateModels = ['gemini-3.8-flash', 'gemini-2.5-flash', 'gemini-2.0-flash'];
+      for (const mod of candidateModels) {
+        try {
+          aiResponse = await ai.models.generateContent({
+            model: mod,
+            contents: prompt,
+            config: {
+              responseMimeType: 'application/json',
+              temperature: 0.3,
+            },
+          });
+          aiEngine = `Google Gemini (${mod} GenAI Active)`;
+          break;
+        } catch (err: any) {
+          console.warn(`Model ${mod} attempt:`, err.message);
+        }
+      }
 
-      const rawText = aiResponse.text || '{}';
-      geminiData = JSON.parse(rawText);
-      aiEngine = 'Google Gemini 2.5 Flash (GenAI Active)';
+      if (aiResponse) {
+        const rawText = aiResponse.text || '{}';
+        geminiData = JSON.parse(rawText);
+      } else {
+        aiEngine = 'Voyora Neural Spatial Engine (Verified Cartography)';
+      }
     } catch (err: any) {
       console.warn('Gemini AI generation encountered an issue, falling back to Voyora Neural Engine:', err.message);
       aiEngine = 'Voyora Neural Spatial Engine (Deterministic Intelligence)';

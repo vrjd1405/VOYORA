@@ -14,6 +14,7 @@ export async function fetchDestinations(params?: {
   q?: string;
   category?: string;
   city?: string;
+  country?: string;
   limit?: number;
   page?: number;
   sort?: string;
@@ -22,6 +23,7 @@ export async function fetchDestinations(params?: {
   if (params?.q) query.append('q', params.q);
   if (params?.category && params.category !== 'all') query.append('category', params.category);
   if (params?.city && params.city !== 'all') query.append('city', params.city);
+  if (params?.country && params.country !== 'all') query.append('country', params.country);
   if (params?.limit) query.append('limit', params.limit.toString());
   if (params?.page) query.append('page', params.page.toString());
   if (params?.sort) query.append('sort', params.sort);
@@ -195,7 +197,6 @@ export async function generateSmartPlan(payload: {
   days: number;
   interests: string[];
   pace: string;
-  geminiApiKey?: string;
 }): Promise<SmartPlanResponse> {
   const res = await fetch(`${API_BASE}/planner/generate`, {
     method: 'POST',

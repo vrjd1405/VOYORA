@@ -1,5 +1,6 @@
 import { Destination } from '../types/index.js';
 import { INDIAN_DESTINATIONS } from './curatedIndianDestinations.js';
+import { EXPANDED_GLOBAL_DESTINATIONS } from './curatedGlobalDestinations.js';
 
 // Curated verified global destinations with authentic coordinates, addresses, and high-res imagery
 const GLOBAL_DESTINATIONS: Destination[] = [
@@ -581,9 +582,10 @@ const GLOBAL_DESTINATIONS: Destination[] = [
   }
 ];
 
-// Combine global curated destinations with comprehensive authentic Indian / Tamil Nadu destinations
+// Combine global curated destinations with comprehensive authentic Indian / Tamil Nadu destinations and expanded world realms
 export const VERIFIED_DESTINATIONS: Destination[] = [
   ...GLOBAL_DESTINATIONS,
+  ...EXPANDED_GLOBAL_DESTINATIONS,
   ...INDIAN_DESTINATIONS
 ];
 
@@ -661,10 +663,35 @@ export function matchesCity(destCity: string, filterCity: string, tags?: string[
 export const DYNAMIC_DESTINATIONS_CACHE = new Map<string, Destination>();
 
 /**
+ * Fetch genuine travel photography from Wikipedia / Wikimedia Commons
+ */
+async function fetchWikipediaPhoto(landmarkName: string): Promise<string | null> {
+  try {
+    const cleanName = landmarkName.replace(/[^\w\s-]/g, '').trim().replace(/\s+/g, '_');
+    const url = `https://en.wikipedia.org/api/rest_v1/page/summary/${encodeURIComponent(cleanName)}`;
+    const res = await fetch(url, { headers: { 'User-Agent': 'VoyoraTravelApp/1.0 (contact@voyora.travel)' } });
+    if (res.ok) {
+      const data = (await res.json()) as any;
+      let img = data.thumbnail?.source || data.originalimage?.source || null;
+      if (img && img.includes('/wikipedia/commons/')) {
+        let direct = img.replace('https://thumb.wikimedia.org/', 'https://upload.wikimedia.org/');
+        direct = direct.replace('/wikipedia/commons/thumb/', '/wikipedia/commons/');
+        const match = direct.match(/(https:\/\/upload\.wikimedia\.org\/wikipedia\/commons\/[^\/]+\/[^\/]+\/[^\/]+)\/.*$/);
+        if (match) direct = match[1];
+        return direct.split('?')[0];
+      }
+    }
+  } catch (err) {
+    // Non-fatal fallback to Unsplash
+  }
+  return null;
+}
+
+/**
  * Fetch genuine travel photography from Unsplash API
  */
 async function fetchUnsplashPhoto(term: string): Promise<string | null> {
-  const accessKey = process.env.UNSPLASH_ACCESS_KEY || '48ZSI9ByxmEthvD07aLYRSdBSEsDmxMU2-PGWvLYoik';
+  const accessKey = process.env.UNSPLASH_ACCESS_KEY || '';
   if (!accessKey) return null;
   try {
     const url = `https://api.unsplash.com/search/photos?query=${encodeURIComponent(term)}&client_id=${accessKey}&orientation=landscape&per_page=1`;
@@ -685,7 +712,7 @@ async function fetchUnsplashPhoto(term: string): Promise<string | null> {
  * Live Geoapify Places & Geocoding integration with Unsplash high-res photography
  */
 async function fetchCityPlacesFromGeoapify(cityName: string, preferredCategory?: string): Promise<Destination[]> {
-  const geoapifyKey = process.env.GEOAPIFY_API_KEY || '715d707e4ce3492c8ac0a46675cdace9';
+  const geoapifyKey = process.env.GEOAPIFY_API_KEY || '';
   if (!geoapifyKey) return [];
 
   try {
@@ -727,9 +754,12 @@ async function fetchCityPlacesFromGeoapify(cityName: string, preferredCategory?:
       else if (cats.some((c: string) => c.includes('beach'))) category = 'Coastal & Beach';
       else if (cats.some((c: string) => c.includes('heritage') || c.includes('historic'))) category = 'Historic';
 
-      let imageUrl = await fetchUnsplashPhoto(`${rawName} ${resolvedCity}`);
+      let imageUrl = await fetchWikipediaPhoto(rawName);
       if (!imageUrl) {
-        imageUrl = 'https://images.unsplash.com/photo-1582510003544-4d00b7f74220?auto=format&fit=crop&w=1200&q=85';
+        imageUrl = await fetchUnsplashPhoto(`${rawName} ${resolvedCity}`);
+      }
+      if (!imageUrl) {
+        imageUrl = 'https://images.unsplash.com/photo-1488646953014-85cb44e25828?auto=format&fit=crop&w=1200&q=85';
       }
 
       const dest: Destination = {
@@ -759,7 +789,7 @@ async function fetchCityPlacesFromGeoapify(cityName: string, preferredCategory?:
 }
 
 async function fetchFromGeoapify(query: string, preferredCategory?: string): Promise<Destination[]> {
-  const geoapifyKey = process.env.GEOAPIFY_API_KEY || '715d707e4ce3492c8ac0a46675cdace9';
+  const geoapifyKey = process.env.GEOAPIFY_API_KEY || '';
   if (!geoapifyKey) return [];
 
   try {
@@ -937,6 +967,7 @@ export async function searchPlaces(params: {
   q?: string;
   category?: string;
   city?: string;
+  country?: string;
   limit?: number;
   page?: number;
   sort?: string;
@@ -946,6 +977,7 @@ export async function searchPlaces(params: {
   const query = (params.q || '').trim().toLowerCase();
   const categoryFilter = (params.category || '').trim();
   const cityFilter = (params.city || '').trim().toLowerCase();
+  const countryFilter = (params.country || '').trim().toLowerCase();
 
   // Combine verified curated dataset and any previously cached dynamic places
   const allKnown = [...VERIFIED_DESTINATIONS, ...Array.from(DYNAMIC_DESTINATIONS_CACHE.values())];
@@ -959,6 +991,14 @@ export async function searchPlaces(params: {
       d.category.toLowerCase().includes(query) ||
       d.description?.toLowerCase().includes(query) ||
       d.tags?.some(t => t.toLowerCase().includes(query))
+    );
+  }
+
+  if (countryFilter && countryFilter !== 'all') {
+    filtered = filtered.filter(d => 
+      d.country.toLowerCase() === countryFilter ||
+      d.country.toLowerCase().includes(countryFilter) ||
+      countryFilter.includes(d.country.toLowerCase())
     );
   }
 
@@ -1095,7 +1135,7 @@ export async function getDestinationById(id: string): Promise<Destination | null
   // Dynamic recovery for Geoapify IDs if not in cache
   if (id.startsWith('geo_')) {
     const rawId = id.replace('geo_', '');
-    const geoapifyKey = process.env.GEOAPIFY_API_KEY || '715d707e4ce3492c8ac0a46675cdace9';
+    const geoapifyKey = process.env.GEOAPIFY_API_KEY || '';
     if (geoapifyKey) {
       try {
         const placeRes = await fetch(`https://api.geoapify.com/v2/place-details?id=${encodeURIComponent(rawId)}&apiKey=${geoapifyKey}`);

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import {
   Sparkles,
   Calendar,
@@ -12,16 +12,15 @@ import {
   Lightbulb,
   Printer,
   Copy,
-  ExternalLink,
-  Key,
   ShieldCheck,
   Navigation,
-  ChevronDown,
-  ChevronUp,
   Thermometer,
   Wind,
   CheckCircle2,
-  Info,
+  ArrowRight,
+  Globe,
+  Coffee,
+  Zap,
 } from 'lucide-react';
 import confetti from 'canvas-confetti';
 import { SmartPlanResponse } from '../types';
@@ -43,11 +42,6 @@ export const SmartPlannerPage: React.FC<SmartPlannerPageProps> = ({ onNavigate }
     'Scenic Gardens & Nature',
     'Culinary Street Discovery',
   ]);
-  const [geminiApiKey, setGeminiApiKey] = useState<string>(() => {
-    return localStorage.getItem('voyora_gemini_api_key') || '';
-  });
-  const [tempApiKey, setTempApiKey] = useState<string>(geminiApiKey);
-  const [showAiSettings, setShowAiSettings] = useState<boolean>(false);
   const [loading, setLoading] = useState(false);
   const [generatedPlan, setGeneratedPlan] = useState<SmartPlanResponse | null>(null);
   const [savingPlan, setSavingPlan] = useState(false);
@@ -56,40 +50,46 @@ export const SmartPlannerPage: React.FC<SmartPlannerPageProps> = ({ onNavigate }
   const { refreshTrip } = useTrip();
   const toast = useToast();
 
-  useEffect(() => {
-    if (geminiApiKey) {
-      localStorage.setItem('voyora_gemini_api_key', geminiApiKey);
-    } else {
-      localStorage.removeItem('voyora_gemini_api_key');
-    }
-  }, [geminiApiKey]);
-
   const presetGroups = [
     {
       group: 'Tamil Nadu & South India',
+      theme: 'emerald',
       cities: [
         'Madurai',
         'Chennai',
+        'Ooty',
         'Coimbatore',
         'Mahabalipuram',
         'Thanjavur',
         'Kanyakumari',
-        'Ooty',
         'Kodaikanal',
         'Rameswaram',
-        'Tiruchirappalli',
-        'Kanchipuram',
         'Bengaluru',
         'Kochi',
       ],
     },
     {
       group: 'Pan-India Highlights',
-      cities: ['Jaipur', 'Delhi', 'Mumbai', 'Varanasi', 'Agra', 'Goa'],
+      theme: 'amber',
+      cities: ['Jaipur', 'Delhi', 'Mumbai', 'Varanasi', 'Agra', 'Goa', 'Hyderabad'],
     },
     {
-      group: 'International Metropolises',
-      cities: ['Paris', 'Tokyo', 'Rome', 'Barcelona', 'London', 'Dubai', 'Global Highlights'],
+      group: 'Global Realms & Wonders',
+      theme: 'sky',
+      cities: [
+        'Zermatt',
+        'Paris',
+        'Tokyo',
+        'Rome',
+        'Cairo',
+        'Singapore',
+        'Santorini',
+        'Kyoto',
+        'London',
+        'Dubai',
+        'Sydney',
+        'Amsterdam',
+      ],
     },
   ];
 
@@ -110,42 +110,27 @@ export const SmartPlannerPage: React.FC<SmartPlannerPageProps> = ({ onNavigate }
     );
   };
 
-  const handleSaveApiKey = (e: React.FormEvent) => {
-    e.preventDefault();
-    setGeminiApiKey(tempApiKey.trim());
-    toast.success(
-      tempApiKey.trim() ? 'Gemini Key Configured' : 'Key Cleared',
-      tempApiKey.trim()
-        ? 'Google Gemini 2.5 Flash GenAI will now power rich custom narratives and culinary tips.'
-        : 'Reverted to Voyora Built-in Neural Spatial Engine.'
-    );
-    setShowAiSettings(false);
-  };
-
-  const handleClearApiKey = () => {
-    setTempApiKey('');
-    setGeminiApiKey('');
-    toast.info('API Key Removed', 'Using Voyora Built-in Neural Spatial Engine (Zero-Key Mode).');
-  };
-
   const handleGenerate = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!city.trim()) {
+      toast.error('City Required', 'Please enter or select a destination city.');
+      return;
+    }
     setLoading(true);
     try {
       const plan = await api.generateSmartPlan({
-        city: city === 'Global Highlights' ? 'all' : city,
+        city: city.trim(),
         days,
         interests: selectedInterests,
         pace,
-        geminiApiKey: geminiApiKey.trim() || undefined,
       });
       setGeneratedPlan(plan);
       toast.success(
         'Itinerary Synthesized',
-        `Crafted ${plan.daysCount}-day schedule with ${plan.totalPlaces} curated destinations via ${plan.aiEngine}.`
+        `Crafted custom ${plan.daysCount}-day journey for ${plan.city} with ${plan.totalPlaces} curated destinations.`
       );
     } catch (err: any) {
-      toast.error('Planning Error', err.message);
+      toast.error('Planning Error', err.message || 'Failed to synthesize itinerary.');
     } finally {
       setLoading(false);
     }
@@ -178,7 +163,6 @@ export const SmartPlannerPage: React.FC<SmartPlannerPageProps> = ({ onNavigate }
     const lines = [
       `VOYORA SMART ITINERARY: ${generatedPlan.city.toUpperCase()}`,
       `Duration: ${generatedPlan.daysCount} Days (${generatedPlan.totalPlaces} Curated Stops)`,
-      `Synthesized By: ${generatedPlan.aiEngine}`,
       '',
       `EXECUTIVE SUMMARY:`,
       generatedPlan.summary || '',
@@ -247,159 +231,83 @@ export const SmartPlannerPage: React.FC<SmartPlannerPageProps> = ({ onNavigate }
   };
 
   return (
-    <div className="planner-page-root container">
-      {/* Top Banner & AI Engine Status */}
-      <div className="planner-header">
-        <div className="flex flex-wrap items-center justify-between gap-3 mb-3">
-          <div className="flex items-center gap-2">
-            <span className="badge badge-violet">
-              <Sparkles size={13} className="text-violet-400" />
-              <span>Dual-Engine AI Trip Planner</span>
+    <div className="planner-sky-theme-wrapper">
+      <div className="planner-page-root container relative z-10">
+        {/* Top Luxury Banner */}
+        <div className="planner-header">
+          <div className="flex flex-wrap items-center gap-2.5 mb-3.5">
+            <div className="planner-luxury-pill">
+              <Sparkles size={13} className="text-amber-300" />
+              <span className="pill-text-gold">VOYORA AI EXPEDITION ARCHITECT</span>
+            </div>
+            <span className="planner-status-pill">
+              <ShieldCheck size={13} className="text-emerald-300" />
+              <span className="pill-text-emerald">100% Strict City Isolation</span>
             </span>
-            <span
-              className={`badge ${
-                geminiApiKey ? 'badge-emerald' : 'badge-blue'
-              } flex items-center gap-1.5`}
-            >
-              <ShieldCheck size={12} />
-              <span>
-                {geminiApiKey
-                  ? 'Google Gemini 2.5 Flash (GenAI Active)'
-                  : 'Voyora Neural Spatial Engine (Zero-Key Active)'}
-              </span>
+            <span className="planner-sky-pill">
+              <CloudSun size={13} className="text-sky-300" />
+              <span className="pill-text-sky">Real-Time Atmosphere Engine</span>
             </span>
           </div>
 
-          <button
-            type="button"
-            onClick={() => setShowAiSettings(prev => !prev)}
-            className="ai-settings-toggle-btn"
-          >
-            <Key size={14} className="text-amber-400" />
-            <span>AI Model & Key Settings</span>
-            {showAiSettings ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
-          </button>
+          <h1 className="planner-main-title">
+            Smart <span className="title-sky-gradient">Journey Architect</span>
+          </h1>
+          <p className="planner-main-subtitle">
+            Curate bespoke voyages with <span className="highlight-sky">precise geographic boundaries</span>, tailored <span className="highlight-amber">travel cadence</span>, and rich <span className="highlight-violet">cultural atmosphere</span>. Voyora orchestrates authentic landmarks, real-time <span className="highlight-cyan">meteorological intelligence</span>, dynamic <span className="highlight-emerald">transit routing</span>, and authentic <span className="highlight-coral">regional gastronomy</span> with <span className="highlight-gold-pill">100% Strict City Isolation</span>.
+          </p>
         </div>
-
-        <h1 className="text-3xl sm:text-4xl font-extrabold text-white tracking-tight">
-          Smart Journey Architect
-        </h1>
-        <p className="text-slate-400 text-sm max-w-3xl mt-1.5 leading-relaxed">
-          Specify your destination, pace, and interests. Voyora orchestrates authentic landmarks,
-          live Open-Meteo climate forecasts, route distances, and regional dining highlights with{' '}
-          <strong className="text-white">100% strict city isolation</strong>.
-        </p>
-      </div>
-
-      {/* Expandable AI Model & Key Configuration Drawer */}
-      {showAiSettings && (
-        <div className="ai-settings-card mb-8 animate-fadeIn">
-          <div className="flex items-start justify-between gap-4 mb-4">
-            <div>
-              <h3 className="text-base font-bold text-white flex items-center gap-2">
-                <Sparkles size={16} className="text-amber-400" />
-                <span>AI Planner Engine Configuration</span>
-              </h3>
-              <p className="text-xs text-slate-400 mt-1 max-w-2xl leading-relaxed">
-                Voyora seamlessly supports two engines: our built-in{' '}
-                <strong className="text-sky-300">Voyora Neural Spatial Engine</strong> (requires NO
-                keys, powered by live Geoapify cartography & verified landmarks), and optional{' '}
-                <strong className="text-amber-300">Google Gemini 2.5 Flash</strong> for generative
-                cultural narratives and custom dining suggestions.
-              </p>
-            </div>
-            <a
-              href="https://aistudio.google.com/app/apikey"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="btn btn-secondary text-xs flex items-center gap-1 py-1.5 px-3 shrink-0"
-            >
-              <span>Get Free Gemini Key</span>
-              <ExternalLink size={12} />
-            </a>
-          </div>
-
-          <form onSubmit={handleSaveApiKey} className="flex flex-col sm:flex-row gap-3 items-center">
-            <div className="relative flex-1 w-full">
-              <input
-                type="password"
-                value={tempApiKey}
-                onChange={e => setTempApiKey(e.target.value)}
-                placeholder="Paste your Google Gemini API Key (e.g. AIzaSy...)"
-                className="config-input pr-10 text-sm"
-              />
-            </div>
-            <div className="flex items-center gap-2 w-full sm:w-auto">
-              <button type="submit" className="btn btn-primary text-xs py-2.5 px-4 w-full sm:w-auto">
-                <Check size={14} />
-                <span>Apply Key</span>
-              </button>
-              {geminiApiKey && (
-                <button
-                  type="button"
-                  onClick={handleClearApiKey}
-                  className="btn btn-secondary text-xs py-2.5 px-3"
-                  title="Remove Key & Revert to Zero-Key Neural Engine"
-                >
-                  <Trash2 size={14} className="text-rose-400" />
-                </button>
-              )}
-            </div>
-          </form>
-
-          <div className="mt-3 flex items-center gap-2 text-xs text-slate-400">
-            <Info size={13} className="text-sky-400 shrink-0" />
-            <span>
-              Your key is saved locally in your browser and used strictly to synthesize your
-              itineraries. If no key is set, the planner works 100% out-of-the-box using the built-in
-              spatial neural engine!
-            </span>
-          </div>
-        </div>
-      )}
 
       <div className="planner-grid">
-        {/* Left Column: Configuration Form */}
-        <div className="planner-config-panel glass-card p-6 h-fit">
-          <form onSubmit={handleGenerate} className="space-y-6">
+        {/* Left Column: Premium Configuration Form */}
+        <div className="planner-config-panel">
+          <form onSubmit={handleGenerate} className="planner-form-body">
             {/* Destination Selection */}
             <div>
-              <label className="config-label">
-                <MapPin size={15} className="text-sky-400" />
-                <span>Destination City or Realm</span>
+              <label className="config-label label-theme-sky">
+                <span className="config-label-icon"><MapPin size={15} /></span>
+                <span className="config-label-text">
+                  Destination City <span className="config-label-sub">(& Geographic Realm)</span>
+                </span>
               </label>
 
               {/* Grouped City Presets */}
-              <div className="space-y-2.5 mb-3.5">
+              <div className="preset-groups-container">
                 {presetGroups.map(pg => (
-                  <div key={pg.group}>
-                    <span className="text-[10px] font-bold uppercase tracking-wider text-slate-500 block mb-1">
-                      {pg.group}
-                    </span>
+                  <div key={pg.group} className="preset-group-block">
+                    <div className={`preset-group-header theme-${pg.theme}`}>
+                      <span className="group-accent-dot" />
+                      <span className="preset-group-title">{pg.group}</span>
+                    </div>
                     <div className="city-presets-row">
-                      {pg.cities.map(c => (
-                        <button
-                          type="button"
-                          key={c}
-                          onClick={() => setCity(c)}
-                          className={`city-preset-btn ${city === c ? 'active' : ''}`}
-                        >
-                          {c}
-                        </button>
-                      ))}
+                      {pg.cities.map(c => {
+                        const isActive = city.toLowerCase() === c.toLowerCase();
+                        return (
+                          <button
+                            type="button"
+                            key={c}
+                            onClick={() => setCity(c)}
+                            className={`city-preset-btn ${isActive ? 'active' : ''}`}
+                          >
+                            {c}
+                          </button>
+                        );
+                      })}
                     </div>
                   </div>
                 ))}
               </div>
 
-              <div className="relative">
+              {/* Custom Input */}
+              <div className="custom-city-input-wrap">
+                <Globe size={16} className="city-input-icon" />
                 <input
                   type="text"
                   value={city}
                   onChange={e => setCity(e.target.value)}
-                  placeholder="Or type custom city (e.g. Salem, Vellore, Kyoto)..."
+                  placeholder="Or type any global city (e.g. Zurich, Lucerne, Cairo, Kyoto, Salem)..."
                   required
-                  className="config-input pl-3.5"
+                  className="config-input"
                 />
               </div>
             </div>
@@ -407,10 +315,10 @@ export const SmartPlannerPage: React.FC<SmartPlannerPageProps> = ({ onNavigate }
             {/* Travel Days (1 to 7) */}
             <div>
               <div className="flex justify-between items-center mb-2">
-                <label className="config-label mb-0">
-                  <Calendar size={15} className="text-violet-400" />
-                  <span>
-                    Duration: {days} {days === 1 ? 'Travel Day' : 'Travel Days'}
+                <label className="config-label label-theme-amber mb-0">
+                  <span className="config-label-icon"><Calendar size={15} /></span>
+                  <span className="config-label-text">
+                    Travel Duration: <strong className="highlight-amber-bold">{days} {days === 1 ? 'Travel Day' : 'Travel Days'}</strong>
                   </span>
                 </label>
               </div>
@@ -428,38 +336,49 @@ export const SmartPlannerPage: React.FC<SmartPlannerPageProps> = ({ onNavigate }
               </div>
             </div>
 
-            {/* Travel Pace */}
+            {/* Travel Pace / Cadence */}
             <div>
-              <label className="config-label">
-                <Clock size={15} className="text-amber-400" />
-                <span>Travel Cadence</span>
+              <label className="config-label label-theme-emerald">
+                <span className="config-label-icon"><Clock size={15} /></span>
+                <span className="config-label-text">
+                  Travel Cadence <span className="config-label-sub">(Pacing Intensity)</span>
+                </span>
               </label>
               <div className="pace-grid">
                 {[
-                  { id: 'relaxed', label: 'Relaxed', desc: '2 stops / day' },
-                  { id: 'balanced', label: 'Balanced', desc: '3 stops / day' },
-                  { id: 'fast-paced', label: 'Fast-Paced', desc: '4 stops / day' },
-                ].map(p => (
-                  <button
-                    type="button"
-                    key={p.id}
-                    onClick={() => setPace(p.id as any)}
-                    className={`pace-card ${pace === p.id ? 'active' : ''}`}
-                  >
-                    <span className="font-bold text-white text-sm block">{p.label}</span>
-                    <span className="text-xs text-slate-400 block mt-1">{p.desc}</span>
-                  </button>
-                ))}
+                  { id: 'relaxed', label: 'Relaxed', desc: '2 stops / day', icon: Coffee, theme: 'amber' },
+                  { id: 'balanced', label: 'Balanced', desc: '3 stops / day', icon: Compass, theme: 'sky' },
+                  { id: 'fast-paced', label: 'Fast-Paced', desc: '4 stops / day', icon: Zap, theme: 'violet' },
+                ].map(p => {
+                  const IconComp = p.icon;
+                  const active = pace === p.id;
+                  return (
+                    <button
+                      type="button"
+                      key={p.id}
+                      onClick={() => setPace(p.id as any)}
+                      className={`pace-card pace-theme-${p.theme} ${active ? 'active' : ''}`}
+                    >
+                      <div className="pace-icon-wrap">
+                        <IconComp size={16} />
+                      </div>
+                      <span className="pace-label">{p.label}</span>
+                      <span className="pace-desc">{p.desc}</span>
+                    </button>
+                  );
+                })}
               </div>
             </div>
 
             {/* Cultural & Travel Interests */}
             <div>
-              <label className="config-label">
-                <Compass size={15} className="text-emerald-400" />
-                <span>Selected Interests & Atmosphere</span>
+              <label className="config-label label-theme-violet">
+                <span className="config-label-icon"><Compass size={15} /></span>
+                <span className="config-label-text">
+                  Selected Atmosphere <span className="config-label-sub">(& Personal Interests)</span>
+                </span>
               </label>
-              <div className="flex flex-wrap gap-2">
+              <div className="interests-flex-wrap">
                 {interestOptions.map(interest => {
                   const active = selectedInterests.includes(interest);
                   return (
@@ -469,7 +388,7 @@ export const SmartPlannerPage: React.FC<SmartPlannerPageProps> = ({ onNavigate }
                       onClick={() => toggleInterest(interest)}
                       className={`interest-chip ${active ? 'active' : ''}`}
                     >
-                      {active && <Check size={12} className="text-sky-400" />}
+                      {active && <Check size={12} className="interest-check-icon" />}
                       <span>{interest}</span>
                     </button>
                   );
@@ -477,48 +396,49 @@ export const SmartPlannerPage: React.FC<SmartPlannerPageProps> = ({ onNavigate }
               </div>
             </div>
 
-            {/* Submit Button */}
+            {/* Submit Action Button */}
             <button
               type="submit"
               disabled={loading}
-              className="btn btn-primary w-full py-3.5 text-base flex items-center justify-center gap-2 shadow-lg shadow-sky-500/20"
+              className="planner-generate-btn"
             >
-              <Sparkles size={18} className={loading ? 'animate-spin' : ''} />
-              <span>
+              <div className="btn-shimmer" />
+              <Sparkles size={18} className={loading ? 'animate-spin text-amber-300' : 'text-amber-300'} />
+              <span className="btn-label">
                 {loading
-                  ? 'Synthesizing Authentic Itinerary...'
+                  ? `Synthesizing ${city} Itinerary...`
                   : `Generate ${city} Itinerary`}
               </span>
+              <ArrowRight size={17} className="btn-arrow" />
             </button>
           </form>
         </div>
 
-        {/* Right Column: Generated Plan Preview */}
+        {/* Right Column: Generated Plan or Luxury Studio Preview */}
         <div className="planner-results-panel">
           {generatedPlan ? (
             <div className="space-y-6 animate-fadeIn">
               {/* Plan Action Bar */}
-              <div className="glass-panel p-6 flex flex-wrap items-center justify-between gap-4 border border-sky-500/20 shadow-xl">
+              <div className="plan-summary-action-bar">
                 <div>
                   <div className="flex flex-wrap items-center gap-2 mb-1.5">
-                    <span className="badge badge-emerald flex items-center gap-1">
+                    <span className="badge-ready">
                       <CheckCircle2 size={12} />
-                      <span>Itinerary Ready</span>
+                      <span>Itinerary Synthesized</span>
                     </span>
-                    <span className="badge badge-violet text-[11px]">
-                      {generatedPlan.aiEngine}
+                    <span className="badge-luxury">
+                      Voyora Intelligence
                     </span>
                   </div>
-                  <h3 className="text-2xl font-extrabold text-white">
-                    {generatedPlan.city} • {generatedPlan.daysCount} Days ({generatedPlan.totalPlaces}{' '}
-                    Curated Stops)
+                  <h3 className="plan-summary-title">
+                    {generatedPlan.city} • {generatedPlan.daysCount} Days ({generatedPlan.totalPlaces} Curated Stops)
                   </h3>
                 </div>
 
                 <div className="flex flex-wrap items-center gap-2">
                   <button
                     onClick={handleCopySummary}
-                    className="btn btn-secondary text-xs flex items-center gap-1.5 py-2 px-3"
+                    className="plan-action-btn"
                     title="Copy full itinerary summary to clipboard"
                   >
                     {copiedSummary ? (
@@ -531,7 +451,7 @@ export const SmartPlannerPage: React.FC<SmartPlannerPageProps> = ({ onNavigate }
 
                   <button
                     onClick={handlePrint}
-                    className="btn btn-secondary text-xs flex items-center gap-1.5 py-2 px-3"
+                    className="plan-action-btn"
                     title="Print or export as PDF"
                   >
                     <Printer size={14} />
@@ -541,7 +461,7 @@ export const SmartPlannerPage: React.FC<SmartPlannerPageProps> = ({ onNavigate }
                   <button
                     onClick={() => handleSaveToItinerary(false)}
                     disabled={savingPlan}
-                    className="btn btn-primary text-xs flex items-center gap-1.5 py-2 px-4 shadow-lg shadow-sky-500/25"
+                    className="plan-save-btn"
                   >
                     <Check size={15} />
                     <span>{savingPlan ? 'Saving to Database...' : 'Add to My Trip'}</span>
@@ -551,8 +471,8 @@ export const SmartPlannerPage: React.FC<SmartPlannerPageProps> = ({ onNavigate }
 
               {/* Trip Narrative Summary */}
               {generatedPlan.summary && (
-                <div className="glass-card p-5 border-l-4 border-l-sky-400">
-                  <p className="text-slate-300 text-sm leading-relaxed italic">
+                <div className="plan-narrative-card">
+                  <p className="plan-narrative-text">
                     "{generatedPlan.summary}"
                   </p>
                 </div>
@@ -560,15 +480,15 @@ export const SmartPlannerPage: React.FC<SmartPlannerPageProps> = ({ onNavigate }
 
               {/* Live Weather Forecast Ribbon */}
               {generatedPlan.weatherForecast && (
-                <div className="glass-card p-5">
+                <div className="plan-weather-card">
                   <div className="flex items-center justify-between flex-wrap gap-2 mb-3">
                     <div className="flex items-center gap-2">
                       <CloudSun size={18} className="text-amber-400" />
-                      <h4 className="text-sm font-bold text-white uppercase tracking-wider">
-                        Destination Climate & Travel Forecast
+                      <h4 className="weather-card-title">
+                        Destination Climate & Meteorological Forecast
                       </h4>
                     </div>
-                    <div className="flex items-center gap-3 text-xs text-slate-400">
+                    <div className="flex items-center gap-3 text-xs text-slate-300">
                       <span className="flex items-center gap-1">
                         <Thermometer size={13} className="text-sky-400" />
                         <span>
@@ -589,13 +509,13 @@ export const SmartPlannerPage: React.FC<SmartPlannerPageProps> = ({ onNavigate }
                     <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2.5">
                       {generatedPlan.weatherForecast.forecastDays.map((fd, idx) => (
                         <div key={idx} className="weather-day-chip">
-                          <span className="text-[11px] text-slate-400 block font-medium">
+                          <span className="weather-day-label">
                             Day {idx + 1} ({fd.date.slice(5)})
                           </span>
-                          <span className="text-sm font-bold text-white block mt-0.5">
+                          <span className="weather-temp-range">
                             {Math.round(fd.maxTemp)}° / {Math.round(fd.minTemp)}°C
                           </span>
-                          <span className="text-[11px] text-sky-400 truncate block mt-0.5">
+                          <span className="weather-cond-text truncate">
                             {fd.conditionText}
                           </span>
                         </div>
@@ -607,16 +527,15 @@ export const SmartPlannerPage: React.FC<SmartPlannerPageProps> = ({ onNavigate }
 
               {/* Regional Culinary & Dining Guide */}
               {generatedPlan.diningHighlights && generatedPlan.diningHighlights.length > 0 && (
-                <div className="glass-card p-6">
+                <div className="plan-culinary-card">
                   <div className="flex items-center gap-2 mb-4">
                     <Utensils size={18} className="text-amber-400" />
                     <div>
-                      <h4 className="text-base font-bold text-white">
+                      <h4 className="culinary-card-title">
                         Authentic Regional Culinary Guide
                       </h4>
-                      <p className="text-xs text-slate-400">
-                        Iconic local specialties not to be missed during your stay in{' '}
-                        {generatedPlan.city}.
+                      <p className="culinary-card-desc">
+                        Iconic local specialties not to be missed during your journey in {generatedPlan.city}.
                       </p>
                     </div>
                   </div>
@@ -625,12 +544,12 @@ export const SmartPlannerPage: React.FC<SmartPlannerPageProps> = ({ onNavigate }
                     {generatedPlan.diningHighlights.map((dish, i) => (
                       <div key={i} className="culinary-dish-card">
                         <div className="flex items-center justify-between gap-2 mb-1">
-                          <h5 className="font-bold text-white text-sm">{dish.dish}</h5>
-                          <span className="badge badge-amber text-[10px] py-0.5 px-2 shrink-0">
+                          <h5 className="dish-name">{dish.dish}</h5>
+                          <span className="dish-time-badge">
                             {dish.bestTime}
                           </span>
                         </div>
-                        <p className="text-xs text-slate-400 leading-relaxed mt-1">
+                        <p className="dish-desc">
                           {dish.description}
                         </p>
                       </div>
@@ -641,17 +560,17 @@ export const SmartPlannerPage: React.FC<SmartPlannerPageProps> = ({ onNavigate }
 
               {/* Cultural Etiquette & Local Wisdom */}
               {generatedPlan.culturalEtiquette && generatedPlan.culturalEtiquette.length > 0 && (
-                <div className="glass-card p-5">
+                <div className="plan-etiquette-card">
                   <div className="flex items-center gap-2 mb-3">
                     <Lightbulb size={17} className="text-amber-400" />
-                    <h4 className="text-sm font-bold text-white uppercase tracking-wider">
+                    <h4 className="etiquette-card-title">
                       Cultural Etiquette & Practical Travel Tips
                     </h4>
                   </div>
                   <div className="space-y-2">
                     {generatedPlan.culturalEtiquette.map((tip, idx) => (
-                      <div key={idx} className="flex items-start gap-2.5 text-xs text-slate-300">
-                        <div className="w-1.5 h-1.5 rounded-full bg-sky-400 mt-1.5 shrink-0" />
+                      <div key={idx} className="etiquette-tip-row">
+                        <div className="etiquette-bullet" />
                         <span className="leading-relaxed">{tip}</span>
                       </div>
                     ))}
@@ -662,31 +581,31 @@ export const SmartPlannerPage: React.FC<SmartPlannerPageProps> = ({ onNavigate }
               {/* Day Breakdown Cards */}
               <div className="space-y-6">
                 {generatedPlan.days.map(day => (
-                  <div key={day.dayNumber} className="glass-card p-6 border border-slate-800">
-                    <div className="border-b border-slate-800/80 pb-3.5 mb-4 flex flex-wrap items-center justify-between gap-2">
+                  <div key={day.dayNumber} className="day-breakdown-card">
+                    <div className="day-card-header">
                       <div>
                         <div className="flex items-center gap-2 mb-1">
-                          <span className="text-xs font-extrabold text-sky-400 uppercase tracking-wider">
+                          <span className="day-number-pill">
                             Day {day.dayNumber}
                           </span>
                           {day.totalTransitKm !== undefined && day.totalTransitKm > 0 && (
-                            <span className="badge badge-blue text-[10px] py-0.5 px-2 flex items-center gap-1">
+                            <span className="day-transit-pill">
                               <Navigation size={10} />
                               <span>~{day.totalTransitKm} km total daily route</span>
                             </span>
                           )}
                         </div>
-                        <h4 className="text-lg font-bold text-white">{day.title}</h4>
-                        <p className="text-xs text-slate-400 mt-0.5">{day.theme}</p>
+                        <h4 className="day-title">{day.title}</h4>
+                        <p className="day-theme">{day.theme}</p>
                       </div>
                     </div>
 
                     {/* Day Insider Tip */}
                     {day.insiderTip && (
-                      <div className="insider-tip-pill mb-4 flex items-center gap-2 text-xs">
+                      <div className="day-insider-tip">
                         <Lightbulb size={14} className="text-amber-400 shrink-0" />
-                        <span className="text-slate-300">
-                          <strong className="text-amber-300 font-semibold">Insider Tip: </strong>
+                        <span>
+                          <strong className="text-amber-300">Insider Tip: </strong>
                           {day.insiderTip}
                         </span>
                       </div>
@@ -696,74 +615,64 @@ export const SmartPlannerPage: React.FC<SmartPlannerPageProps> = ({ onNavigate }
                     <div className="space-y-3">
                       {day.items.map((item, idx) => (
                         <React.Fragment key={item.destination.id}>
-                          {/* Transit Connector between items */}
                           {idx > 0 && item.transitFromPrevKm !== undefined && (
                             <div className="transit-connector-bar">
                               <div className="transit-connector-line" />
                               <div className="transit-connector-badge">
                                 <Navigation size={10} className="text-sky-400" />
                                 <span>
-                                  {item.transitFromPrevKm} km • ~{item.transitTimeMin || 10} min
-                                  transit
+                                  {item.transitFromPrevKm} km • ~{item.transitTimeMin || 10} min transit
                                 </span>
                               </div>
                               <div className="transit-connector-line" />
                             </div>
                           )}
 
-                          <div className="plan-item-row group">
+                          <div className="plan-item-row">
                             <img
                               src={
                                 item.destination.imageUrl ||
-                                'https://images.unsplash.com/photo-1488646953014-85cb44e25828?auto=format&fit=crop&w=1200&q=85'
+                                'https://images.unsplash.com/photo-1488646953014-85cb44e25828?auto=format&fit=crop&w=800&q=80'
                               }
                               alt={item.destination.name}
                               className="plan-item-img"
                               onError={e => {
                                 (e.target as HTMLImageElement).src =
-                                  'https://images.unsplash.com/photo-1488646953014-85cb44e25828?auto=format&fit=crop&w=1200&q=85';
+                                  'https://images.unsplash.com/photo-1488646953014-85cb44e25828?auto=format&fit=crop&w=800&q=80';
                               }}
                             />
                             <div className="flex-1 min-w-0">
-                              <div className="flex items-center gap-2 flex-wrap">
-                                <span
-                                  className={`badge text-xs py-0.5 px-2 ${
-                                    item.timeSlot === 'Morning'
-                                      ? 'badge-amber'
-                                      : item.timeSlot === 'Afternoon'
-                                      ? 'badge-blue'
-                                      : 'badge-violet'
-                                  }`}
-                                >
+                              <div className="flex items-center gap-2 flex-wrap mb-1">
+                                <span className={`timeslot-badge timeslot-${item.timeSlot?.toLowerCase() || 'morning'}`}>
                                   {item.timeSlot}
                                 </span>
-                                <span className="text-xs text-slate-400">
+                                <span className="item-category-tag">
                                   {item.destination.category}
                                 </span>
                                 {item.destination.rating && (
-                                  <span className="text-xs text-amber-300 font-bold">
+                                  <span className="item-rating-tag">
                                     ★ {item.destination.rating.toFixed(1)}
                                   </span>
                                 )}
                               </div>
 
-                              <h5 className="font-bold text-white text-base truncate mt-1">
+                              <h5 className="item-name truncate">
                                 {item.destination.name}
                               </h5>
-                              <p className="text-xs text-slate-400 truncate mt-0.5">
+                              <p className="item-address truncate">
                                 {item.destination.address || item.destination.city}
                               </p>
-                              <p className="text-xs text-sky-200/80 mt-1.5 leading-relaxed bg-slate-900/40 p-2 rounded-lg border border-slate-800">
+                              <p className="item-note">
                                 {item.suggestionNote}
                               </p>
                             </div>
 
                             <button
                               onClick={() => removeItemFromPlan(day.dayNumber, item.destination.id)}
-                              className="text-slate-500 hover:text-rose-400 p-2 transition-colors self-start"
+                              className="item-remove-btn"
                               title="Remove this suggestion"
                             >
-                              <Trash2 size={16} />
+                              <Trash2 size={15} />
                             </button>
                           </div>
                         </React.Fragment>
@@ -774,231 +683,1160 @@ export const SmartPlannerPage: React.FC<SmartPlannerPageProps> = ({ onNavigate }
               </div>
             </div>
           ) : (
-            <div className="glass-card p-12 text-center flex flex-col items-center justify-center min-h-[480px]">
-              <div className="w-16 h-16 rounded-2xl bg-violet-500/10 border border-violet-500/20 flex items-center justify-center text-violet-400 mb-4 shadow-lg shadow-violet-500/10">
-                <Sparkles size={32} />
+            /* Luxury Executive Studio Canvas (Empty State) */
+            <div className="planner-empty-studio">
+              <div className="studio-icon-orb">
+                <Sparkles size={36} className="orb-sparkle" />
               </div>
-              <h3 className="text-xl font-bold text-white mb-2">Ready to Plan</h3>
-              <p className="text-slate-400 text-sm max-w-md leading-relaxed">
-                Choose any city on Earth, select your travel duration (1–7 days), and click{' '}
-                <strong className="text-white">"Generate Itinerary"</strong>. Voyora will assemble
-                curated destinations, live weather, and culinary secrets.
+              <h3 className="studio-title">AI Expedition Studio</h3>
+              <p className="studio-subtitle">
+                Select your desired <span className="highlight-sky">destination</span>, <span className="highlight-amber">cadence</span>, and <span className="highlight-emerald">atmosphere</span> on the left to synthesize a complete custom journey with verified landmarks, live climate metrics, and culinary secrets.
               </p>
+
+              <div className="studio-grid-features">
+                <div className="studio-feature-card feat-emerald">
+                  <div className="feat-header">
+                    <div className="feat-icon-badge"><ShieldCheck size={14} /></div>
+                    <span className="feat-title">Strict City Isolation</span>
+                  </div>
+                  <p className="feat-desc">
+                    Zero cross-city contamination. Every curated waypoint belongs strictly to your chosen city bounds.
+                  </p>
+                </div>
+
+                <div className="studio-feature-card feat-amber">
+                  <div className="feat-header">
+                    <div className="feat-icon-badge"><CloudSun size={14} /></div>
+                    <span className="feat-title">Live Satellite Climate</span>
+                  </div>
+                  <p className="feat-desc">
+                    Real-time Open-Meteo forecasts with temperature range, condition metrics, and clothing suggestions.
+                  </p>
+                </div>
+
+                <div className="studio-feature-card feat-sky">
+                  <div className="feat-header">
+                    <div className="feat-icon-badge"><Navigation size={14} /></div>
+                    <span className="feat-title">Transit Intelligence</span>
+                  </div>
+                  <p className="feat-desc">
+                    Geoapify synchronized waypoint sequencing with realistic route transit kilometers and travel times.
+                  </p>
+                </div>
+
+                <div className="studio-feature-card feat-coral">
+                  <div className="feat-header">
+                    <div className="feat-icon-badge"><Utensils size={14} /></div>
+                    <span className="feat-title">Regional Gastronomy</span>
+                  </div>
+                  <p className="feat-desc">
+                    Authentic local cuisine suggestions matched to morning, lunch, and dinner with cultural dining tips.
+                  </p>
+                </div>
+              </div>
             </div>
           )}
         </div>
       </div>
+      </div>
 
       <style>{`
+        /* Sky & Cloud Theme Wrapper */
+        .planner-sky-theme-wrapper {
+          position: relative;
+          min-height: 100vh;
+        }
+        .planner-sky-backdrop,
+        .planner-sky-sunbeam-glow,
+        .planner-sky-cloud-mist {
+          display: none !important;
+        }
+
         .planner-page-root {
           padding-top: 36px;
-          padding-bottom: 80px;
+          padding-bottom: 100px;
         }
+
+        /* Ultra High-Contrast Luxury Header Plaque */
         .planner-header {
-          margin-bottom: 28px;
+          margin-bottom: 34px;
+          background: linear-gradient(165deg, #07152e 0%, #040c1c 100%) !important;
+          border: 2px solid #38bdf8 !important;
+          border-radius: 24px;
+          padding: 34px 38px;
+          box-shadow: 0 25px 60px rgba(0, 0, 0, 0.9), 0 0 35px rgba(56, 189, 248, 0.3) !important;
+        }
+        .planner-luxury-pill {
+          display: inline-flex;
+          align-items: center;
+          gap: 7px;
+          padding: 7px 16px;
+          border-radius: 9999px;
+          background: #0d2249;
+          border: 1.5px solid #fbbf24;
+          box-shadow: 0 0 20px rgba(251, 191, 36, 0.45);
+        }
+        .pill-text-gold {
+          color: #fde047;
+          font-size: 0.82rem;
+          font-weight: 900;
+          letter-spacing: 0.08em;
+          text-shadow: 0 0 10px rgba(253, 224, 71, 0.6);
+        }
+        .planner-status-pill {
+          display: inline-flex;
+          align-items: center;
+          gap: 6px;
+          padding: 7px 15px;
+          border-radius: 9999px;
+          background: #064e3b;
+          border: 1.5px solid #34d399;
+          box-shadow: 0 0 18px rgba(52, 211, 153, 0.45);
+        }
+        .pill-text-emerald {
+          color: #4ade80;
+          font-size: 0.82rem;
+          font-weight: 900;
+          text-shadow: 0 0 10px rgba(74, 222, 128, 0.6);
+        }
+        .planner-sky-pill {
+          display: inline-flex;
+          align-items: center;
+          gap: 6px;
+          padding: 7px 15px;
+          border-radius: 9999px;
+          background: #0c4a6e;
+          border: 1.5px solid #38bdf8;
+          box-shadow: 0 0 18px rgba(56, 189, 248, 0.45);
+        }
+        .pill-text-sky {
+          color: #7dd3fc;
+          font-size: 0.82rem;
+          font-weight: 900;
+          text-shadow: 0 0 10px rgba(125, 211, 252, 0.6);
+        }
+
+        .planner-main-title {
+          font-size: 3.2rem;
+          font-weight: 900;
+          color: #ffffff !important;
+          letter-spacing: -0.03em;
+          margin-bottom: 12px;
+          line-height: 1.15;
+          text-shadow: 0 4px 20px rgba(0, 0, 0, 0.95);
+        }
+        .title-sky-gradient {
+          background: linear-gradient(135deg, #ffffff 10%, #38bdf8 55%, #fde047 100%);
+          -webkit-background-clip: text;
+          -webkit-text-fill-color: transparent;
+          filter: drop-shadow(0 0 25px rgba(56, 189, 248, 0.75));
+        }
+        .planner-main-subtitle {
+          color: #ffffff !important;
+          font-size: 1.15rem;
+          max-width: 880px;
+          line-height: 1.8;
+          text-shadow: 0 2px 8px rgba(0, 0, 0, 0.9);
+          font-weight: 600;
+        }
+        .highlight-sky {
+          color: #38bdf8 !important;
+          font-weight: 900;
+          text-shadow: 0 0 10px rgba(56, 189, 248, 0.7);
+        }
+        .highlight-cyan {
+          color: #00f0ff !important;
+          font-weight: 900;
+          text-shadow: 0 0 12px rgba(0, 240, 255, 0.8);
+        }
+          text-shadow: 0 0 10px rgba(56, 189, 248, 0.6);
+        }
+        .highlight-amber {
+          color: #fbbf24;
+          font-weight: 800;
+          text-shadow: 0 0 10px rgba(251, 191, 36, 0.6);
+        }
+        .highlight-emerald {
+          color: #4ade80;
+          font-weight: 800;
+          text-shadow: 0 0 10px rgba(74, 222, 128, 0.6);
+        }
+        .highlight-violet {
+          color: #c084fc;
+          font-weight: 800;
+          text-shadow: 0 0 10px rgba(192, 132, 252, 0.6);
+        }
+        .highlight-coral {
+          color: #fb7185;
+          font-weight: 800;
+          text-shadow: 0 0 10px rgba(251, 113, 133, 0.6);
+        }
+        .highlight-gold {
+          color: #fde047;
+          font-weight: 900;
+          text-shadow: 0 0 14px rgba(253, 224, 71, 0.7);
+        }
+        .highlight-gold-pill {
+          display: inline-block;
+          color: #fde047;
+          background: rgba(245, 158, 11, 0.28);
+          border: 1.5px solid #fbbf24;
+          padding: 2px 10px;
+          border-radius: 9999px;
+          font-weight: 900;
+          font-size: 0.9rem;
+          box-shadow: 0 0 15px rgba(245, 158, 11, 0.45);
+          margin-left: 4px;
+        }
+        .highlight-amber-bold {
+          color: #fde047;
+          font-weight: 900;
+        }
+
+        @media (max-width: 640px) {
+          .planner-main-title {
+            font-size: 2.3rem;
+          }
+          .planner-header {
+            padding: 24px 20px;
+          }
         }
         .planner-grid {
           display: grid;
-          grid-template-columns: 1fr 1.45fr;
-          gap: 28px;
+          grid-template-columns: 1fr 1.4fr;
+          gap: 32px;
         }
-        @media (max-width: 980px) {
+        @media (max-width: 1040px) {
           .planner-grid {
             grid-template-columns: 1fr;
           }
         }
-        .ai-settings-toggle-btn {
-          display: inline-flex;
-          align-items: center;
-          gap: 6px;
-          font-size: 0.75rem;
-          font-weight: 600;
-          padding: 5px 12px;
-          border-radius: 9999px;
-          background: rgba(245, 158, 11, 0.1);
-          border: 1px solid rgba(245, 158, 11, 0.3);
-          color: #fbbf24;
-          cursor: pointer;
-          transition: all 0.2s ease;
+
+        /* High-Contrast Left Configuration Panel */
+        .planner-config-panel {
+          background: linear-gradient(165deg, #091a38 0%, #061226 100%) !important;
+          border: 2px solid rgba(56, 189, 248, 0.45) !important;
+          border-radius: 24px;
+          padding: 32px;
+          box-shadow: 0 25px 60px rgba(0, 0, 0, 0.75), 0 0 35px rgba(56, 189, 248, 0.25) !important;
+          height: fit-content;
         }
-        .ai-settings-toggle-btn:hover {
-          background: rgba(245, 158, 11, 0.18);
-          border-color: rgba(245, 158, 11, 0.5);
-        }
-        .ai-settings-card {
-          background: rgba(15, 23, 42, 0.75);
-          backdrop-filter: blur(16px);
-          border: 1px solid rgba(245, 158, 11, 0.25);
-          border-radius: 16px;
-          padding: 20px 24px;
-          box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4), 0 0 20px rgba(245, 158, 11, 0.05);
+        .planner-form-body {
+          display: flex;
+          flex-direction: column;
+          gap: 24px;
         }
         .config-label {
           display: flex;
           align-items: center;
-          gap: 6px;
-          font-size: 0.85rem;
-          font-weight: 700;
+          gap: 10px;
+          font-size: 1rem;
+          font-weight: 900;
           color: #ffffff;
-          margin-bottom: 10px;
+          margin-bottom: 12px;
+          letter-spacing: 0.01em;
+        }
+        .config-label-icon {
+          width: 32px;
+          height: 32px;
+          border-radius: 8px;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          flex-shrink: 0;
+        }
+        .label-theme-sky .config-label-icon {
+          background: rgba(14, 165, 233, 0.35);
+          color: #38bdf8;
+          border: 1.5px solid #38bdf8;
+        }
+        .label-theme-amber .config-label-icon {
+          background: rgba(245, 158, 11, 0.35);
+          color: #fbbf24;
+          border: 1.5px solid #fbbf24;
+        }
+        .label-theme-emerald .config-label-icon {
+          background: rgba(16, 185, 129, 0.35);
+          color: #34d399;
+          border: 1.5px solid #34d399;
+        }
+        .label-theme-violet .config-label-icon {
+          background: rgba(139, 92, 246, 0.35);
+          color: #c084fc;
+          border: 1.5px solid #c084fc;
+        }
+        .config-label-text {
+          color: #ffffff;
+          font-weight: 900;
+        }
+        .config-label-sub {
+          font-weight: 700;
+          font-size: 0.85rem;
+          color: #7dd3fc;
+          margin-left: 6px;
+        }
+
+        /* Preset Groups */
+        .preset-groups-container {
+          display: flex;
+          flex-direction: column;
+          gap: 14px;
+          margin-bottom: 16px;
+        }
+        .preset-group-block {
+          display: flex;
+          flex-direction: column;
+          gap: 8px;
+        }
+        .preset-group-header {
+          display: flex;
+          align-items: center;
+          gap: 8px;
+          margin-bottom: 4px;
+        }
+        .group-accent-dot {
+          width: 9px;
+          height: 9px;
+          border-radius: 50%;
+          flex-shrink: 0;
+        }
+        .theme-emerald .group-accent-dot {
+          background: #4ade80;
+          box-shadow: 0 0 10px #4ade80;
+        }
+        .theme-emerald .preset-group-title {
+          color: #4ade80 !important;
+          font-weight: 900 !important;
+          font-size: 0.82rem !important;
+          letter-spacing: 0.08em;
+          text-shadow: 0 0 12px rgba(74, 222, 128, 0.5);
+        }
+        .theme-amber .group-accent-dot {
+          background: #fbbf24;
+          box-shadow: 0 0 10px #fbbf24;
+        }
+        .theme-amber .preset-group-title {
+          color: #fbbf24 !important;
+          font-weight: 900 !important;
+          font-size: 0.82rem !important;
+          letter-spacing: 0.08em;
+          text-shadow: 0 0 12px rgba(251, 191, 36, 0.5);
+        }
+        .theme-sky .group-accent-dot {
+          background: #38bdf8;
+          box-shadow: 0 0 10px #38bdf8;
+        }
+        .theme-sky .preset-group-title {
+          color: #38bdf8 !important;
+          font-weight: 900 !important;
+          font-size: 0.82rem !important;
+          letter-spacing: 0.08em;
+          text-shadow: 0 0 12px rgba(56, 189, 248, 0.5);
+        }
+        .preset-group-title {
+          font-size: 0.78rem;
+          font-weight: 900;
+          text-transform: uppercase;
+          letter-spacing: 0.1em;
         }
         .city-presets-row {
           display: flex;
-          gap: 5px;
+          gap: 8px;
           flex-wrap: wrap;
         }
         .city-preset-btn {
-          font-size: 0.72rem;
-          padding: 3px 9px;
-          border-radius: 6px;
-          background: rgba(255, 255, 255, 0.04);
-          border: 1px solid var(--border-subtle);
-          color: var(--text-secondary);
+          font-size: 0.88rem !important;
+          padding: 8px 15px !important;
+          border-radius: 10px !important;
+          background: #0e2248 !important;
+          border: 1.5px solid rgba(125, 211, 252, 0.45) !important;
+          color: #ffffff !important;
           cursor: pointer;
-          transition: all 0.15s ease;
+          font-weight: 800 !important;
+          transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+          box-shadow: 0 3px 8px rgba(0, 0, 0, 0.5) !important;
+          letter-spacing: 0.01em;
         }
         .city-preset-btn:hover {
-          color: #ffffff;
-          background: rgba(255, 255, 255, 0.1);
+          color: #ffffff !important;
+          background: #0284c7 !important;
+          border-color: #38bdf8 !important;
+          transform: translateY(-2px);
+          box-shadow: 0 6px 18px rgba(56, 189, 248, 0.5) !important;
         }
         .city-preset-btn.active {
-          background: rgba(14, 165, 233, 0.2);
-          border-color: var(--primary);
+          background: linear-gradient(135deg, #0284c7 0%, #2563eb 100%) !important;
+          border: 2px solid #fde047 !important;
+          color: #ffffff !important;
+          font-weight: 900 !important;
+          box-shadow: 0 0 22px rgba(14, 165, 233, 0.9), 0 0 12px rgba(253, 224, 71, 0.8) !important;
+          transform: translateY(-2px);
+        }
+
+        /* Custom Input */
+        .custom-city-input-wrap {
+          position: relative;
+          display: flex;
+          align-items: center;
+        }
+        .city-input-icon {
+          position: absolute;
+          left: 15px;
           color: #38bdf8;
+          pointer-events: none;
+        }
+        .config-input {
+          width: 100%;
+          padding: 14px 14px 14px 46px;
+          border-radius: 12px;
+          background: #050e1f !important;
+          border: 2px solid #38bdf8 !important;
+          color: #ffffff !important;
+          font-size: 1.05rem !important;
+          font-weight: 800 !important;
+          outline: none;
+          transition: all 0.2s ease;
+          box-shadow: inset 0 2px 6px rgba(0, 0, 0, 0.6);
+        }
+        .config-input:focus {
+          border-color: #fde047 !important;
+          box-shadow: 0 0 25px rgba(56, 189, 248, 0.8), inset 0 2px 6px rgba(0, 0, 0, 0.6) !important;
+          background: #07142b !important;
+        }
+        .config-input::placeholder {
+          color: #93c5fd !important;
+          opacity: 0.85;
           font-weight: 600;
         }
+
+        /* Day Selector */
         .days-selector-strip {
           display: grid;
           grid-template-columns: repeat(7, 1fr);
-          gap: 6px;
+          gap: 7px;
         }
         .day-count-btn {
-          padding: 10px 4px;
+          padding: 13px 4px;
           text-align: center;
-          border-radius: 8px;
-          font-size: 0.85rem;
-          font-weight: 700;
-          background: rgba(255, 255, 255, 0.04);
-          border: 1px solid var(--border-subtle);
-          color: var(--text-secondary);
+          border-radius: 12px;
+          font-size: 0.95rem;
+          font-weight: 900;
+          background: #0e2248;
+          border: 1.5px solid rgba(125, 211, 252, 0.4);
+          color: #ffffff;
           cursor: pointer;
-          transition: all 0.15s ease;
+          transition: all 0.18s ease;
         }
         .day-count-btn:hover {
-          background: rgba(255, 255, 255, 0.08);
+          background: #0284c7;
           color: #ffffff;
+          border-color: #38bdf8;
+          transform: translateY(-2px);
         }
         .day-count-btn.active {
-          background: linear-gradient(135deg, rgba(14, 165, 233, 0.3), rgba(99, 102, 241, 0.3));
-          border-color: var(--primary);
+          background: linear-gradient(135deg, #0284c7 0%, #2563eb 100%);
+          border: 2px solid #fde047;
           color: #ffffff;
+          box-shadow: 0 0 20px rgba(56, 189, 248, 0.8), 0 0 10px rgba(253, 224, 71, 0.6);
+          transform: translateY(-2px);
         }
+
+        /* Pace Grid */
         .pace-grid {
           display: grid;
           grid-template-columns: repeat(3, 1fr);
-          gap: 8px;
+          gap: 12px;
         }
         .pace-card {
-          padding: 10px 8px;
+          padding: 16px 12px;
           text-align: center;
-          border-radius: 8px;
-          background: rgba(255, 255, 255, 0.04);
-          border: 1px solid var(--border-subtle);
+          border-radius: 14px;
+          background: #0e2248;
+          border: 1.5px solid rgba(125, 211, 252, 0.35);
           cursor: pointer;
-          transition: all 0.15s ease;
+          transition: all 0.22s cubic-bezier(0.4, 0, 0.2, 1);
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          gap: 7px;
         }
         .pace-card:hover {
-          background: rgba(255, 255, 255, 0.08);
+          background: #112854;
+          border-color: #38bdf8;
+          transform: translateY(-2px);
+          box-shadow: 0 8px 20px rgba(0, 0, 0, 0.5);
         }
-        .pace-card.active {
-          background: rgba(245, 158, 11, 0.15);
-          border-color: rgba(245, 158, 11, 0.5);
+        .pace-icon-wrap {
+          width: 32px;
+          height: 32px;
+          border-radius: 8px;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          background: rgba(255, 255, 255, 0.1);
+          color: #93c5fd;
+          transition: all 0.2s ease;
+        }
+        .pace-label {
+          font-weight: 800;
+          color: #ffffff;
+          font-size: 0.96rem;
+        }
+        .pace-desc {
+          font-size: 0.8rem;
+          color: #cbd5e1;
+          font-weight: 600;
+        }
+
+        /* Pace Active Themes */
+        .pace-theme-amber.active {
+          background: rgba(245, 158, 11, 0.28) !important;
+          border: 2px solid #fbbf24 !important;
+          box-shadow: 0 0 22px rgba(245, 158, 11, 0.5) !important;
+        }
+        .pace-theme-amber.active .pace-label {
+          color: #fde047 !important;
+        }
+        .pace-theme-amber.active .pace-desc {
+          color: #fef08a !important;
+        }
+        .pace-theme-amber.active .pace-icon-wrap {
+          background: rgba(245, 158, 11, 0.35);
+          color: #fbbf24;
+        }
+
+        .pace-theme-sky.active {
+          background: rgba(14, 165, 233, 0.28) !important;
+          border: 2px solid #38bdf8 !important;
+          box-shadow: 0 0 22px rgba(56, 189, 248, 0.5) !important;
+        }
+        .pace-theme-sky.active .pace-label {
+          color: #7dd3fc !important;
+        }
+        .pace-theme-sky.active .pace-desc {
+          color: #e0f2fe !important;
+        }
+        .pace-theme-sky.active .pace-icon-wrap {
+          background: rgba(14, 165, 233, 0.35);
+          color: #38bdf8;
+        }
+
+        .pace-theme-violet.active {
+          background: rgba(168, 85, 247, 0.28) !important;
+          border: 2px solid #c084fc !important;
+          box-shadow: 0 0 22px rgba(168, 85, 247, 0.5) !important;
+        }
+        .pace-theme-violet.active .pace-label {
+          color: #e9d5ff !important;
+        }
+        .pace-theme-violet.active .pace-desc {
+          color: #f3e8ff !important;
+        }
+        .pace-theme-violet.active .pace-icon-wrap {
+          background: rgba(139, 92, 246, 0.35);
+          color: #c084fc;
+        }
+
+        /* Interest Chips */
+        .interests-flex-wrap {
+          display: flex;
+          flex-wrap: wrap;
+          gap: 9px;
         }
         .interest-chip {
           display: inline-flex;
           align-items: center;
-          gap: 5px;
-          font-size: 0.75rem;
-          padding: 6px 12px;
+          gap: 7px;
+          font-size: 0.86rem;
+          padding: 9px 16px;
           border-radius: 9999px;
-          background: rgba(255, 255, 255, 0.04);
-          border: 1px solid var(--border-subtle);
-          color: var(--text-secondary);
+          background: #0e2248;
+          border: 1.5px solid rgba(125, 211, 252, 0.4);
+          color: #ffffff;
           cursor: pointer;
-          transition: all 0.15s ease;
+          font-weight: 700;
+          transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
         }
         .interest-chip:hover {
-          background: rgba(255, 255, 255, 0.08);
+          background: #0284c7;
           color: #ffffff;
+          border-color: #38bdf8;
+          transform: translateY(-1.5px);
         }
         .interest-chip.active {
-          background: rgba(14, 165, 233, 0.15);
-          border-color: rgba(14, 165, 233, 0.4);
-          color: #38bdf8;
-          font-weight: 600;
+          background: linear-gradient(135deg, #0284c7 0%, #4f46e5 100%) !important;
+          border: 2px solid #38bdf8 !important;
+          color: #ffffff !important;
+          font-weight: 900 !important;
+          box-shadow: 0 0 18px rgba(56, 189, 248, 0.7) !important;
+          transform: translateY(-1.5px);
         }
-        .plan-item-row {
+        .interest-check-icon {
+          color: #38bdf8;
+        }
+
+        /* Generate CTA Button */
+        .planner-generate-btn {
+          width: 100%;
+          padding: 18px 24px;
+          border-radius: 14px;
+          background: linear-gradient(135deg, #0284c7 0%, #2563eb 50%, #4f46e5 100%);
+          border: 2px solid #fde047;
+          color: #ffffff;
+          font-size: 1.15rem;
+          font-weight: 900;
           display: flex;
-          gap: 14px;
-          padding: 12px;
-          border-radius: 12px;
-          background: rgba(255, 255, 255, 0.03);
-          border: 1px solid rgba(255, 255, 255, 0.06);
-          align-items: flex-start;
+          align-items: center;
+          justify-content: center;
+          gap: 12px;
+          cursor: pointer;
+          box-shadow: 0 14px 40px rgba(2, 132, 199, 0.75), 0 0 25px rgba(253, 224, 71, 0.5);
+          transition: all 0.25s ease;
+          position: relative;
+          overflow: hidden;
+          letter-spacing: 0.02em;
+        }
+        .btn-shimmer {
+          position: absolute;
+          top: 0;
+          left: -100%;
+          width: 50%;
+          height: 100%;
+          background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.35), transparent);
+          animation: shimmer 3s infinite;
+        }
+        @keyframes shimmer {
+          0% { left: -100%; }
+          100% { left: 200%; }
+        }
+        .planner-generate-btn:hover:not(:disabled) {
+          transform: translateY(-2px);
+          box-shadow: 0 18px 50px rgba(37, 99, 235, 0.85), 0 0 35px rgba(253, 224, 71, 0.7);
+          filter: brightness(1.1);
+        }
+        .planner-generate-btn:disabled {
+          opacity: 0.7;
+          cursor: not-allowed;
+        }
+
+        /* High-Contrast Right Studio Canvas */
+        .planner-empty-studio {
+          background: linear-gradient(165deg, #091a38 0%, #061226 100%) !important;
+          border: 2px solid rgba(56, 189, 248, 0.45) !important;
+          border-radius: 24px;
+          padding: 48px 36px;
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          text-align: center;
+          min-height: 540px;
+          justify-content: center;
+          box-shadow: 0 25px 60px rgba(0, 0, 0, 0.75), 0 0 35px rgba(56, 189, 248, 0.25) !important;
+          position: relative;
+          overflow: hidden;
+        }
+        .studio-icon-orb {
+          width: 86px;
+          height: 86px;
+          border-radius: 26px;
+          background: linear-gradient(135deg, rgba(14, 165, 233, 0.35) 0%, rgba(245, 158, 11, 0.35) 100%);
+          border: 2px solid #38bdf8;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          color: #38bdf8;
+          margin-bottom: 22px;
+          box-shadow: 0 0 40px rgba(56, 189, 248, 0.6);
+          animation: floatOrb 4s ease-in-out infinite;
+          position: relative;
+        }
+        .orb-sparkle {
+          color: #fde047;
+          filter: drop-shadow(0 0 8px #fde047);
+        }
+        @keyframes floatOrb {
+          0%, 100% { transform: translateY(0px); }
+          50% { transform: translateY(-7px); }
+        }
+        .studio-title {
+          font-size: 1.9rem;
+          font-weight: 900;
+          color: #ffffff;
+          margin-bottom: 10px;
+          text-shadow: 0 2px 14px rgba(0, 0, 0, 0.8);
+        }
+        .studio-subtitle {
+          color: #f8fafc;
+          font-size: 1.05rem;
+          max-width: 560px;
+          line-height: 1.7;
+          text-shadow: 0 1px 4px rgba(0, 0, 0, 0.8);
+          font-weight: 500;
+        }
+        .studio-grid-features {
+          display: grid;
+          grid-template-columns: repeat(2, 1fr);
+          gap: 16px;
+          margin-top: 34px;
+          width: 100%;
+          max-width: 640px;
+          text-align: left;
+        }
+        @media (max-width: 640px) {
+          .studio-grid-features {
+            grid-template-columns: 1fr;
+          }
+        }
+        .studio-feature-card {
+          background: #0e2248;
+          border: 1.5px solid rgba(186, 230, 253, 0.28);
+          border-radius: 14px;
+          padding: 20px 22px;
+          transition: all 0.22s ease;
+          box-shadow: 0 4px 15px rgba(0, 0, 0, 0.4);
+        }
+        .studio-feature-card:hover {
+          background: #112854;
+          transform: translateY(-2px);
+          box-shadow: 0 10px 25px rgba(0, 0, 0, 0.55);
+          border-color: #38bdf8;
+        }
+        .feat-header {
+          display: flex;
+          align-items: center;
+          gap: 9px;
+          margin-bottom: 8px;
+        }
+        .feat-icon-badge {
+          width: 28px;
+          height: 28px;
+          border-radius: 7px;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          flex-shrink: 0;
+        }
+        .feat-title {
+          font-size: 0.88rem;
+          font-weight: 900;
+          text-transform: uppercase;
+          letter-spacing: 0.06em;
+        }
+        .feat-emerald {
+          border-left: 4px solid #4ade80;
+        }
+        .feat-emerald .feat-title {
+          color: #4ade80;
+          text-shadow: 0 0 12px rgba(74, 222, 128, 0.5);
+        }
+        .feat-emerald .feat-icon-badge {
+          color: #4ade80;
+          background: rgba(74, 222, 128, 0.25);
+        }
+        .feat-amber {
+          border-left: 4px solid #fbbf24;
+        }
+        .feat-amber .feat-title {
+          color: #fde047;
+          text-shadow: 0 0 12px rgba(251, 191, 36, 0.5);
+        }
+        .feat-amber .feat-icon-badge {
+          color: #fbbf24;
+          background: rgba(251, 191, 36, 0.25);
+        }
+        .feat-sky {
+          border-left: 4px solid #38bdf8;
+        }
+        .feat-sky .feat-title {
+          color: #38bdf8;
+          text-shadow: 0 0 12px rgba(56, 189, 248, 0.5);
+        }
+        .feat-sky .feat-icon-badge {
+          color: #38bdf8;
+          background: rgba(56, 189, 248, 0.25);
+        }
+        .feat-coral {
+          border-left: 4px solid #fb7185;
+        }
+        .feat-coral .feat-title {
+          color: #fb7185;
+          text-shadow: 0 0 12px rgba(251, 113, 133, 0.5);
+        }
+        .feat-coral .feat-icon-badge {
+          color: #fb7185;
+          background: rgba(251, 113, 133, 0.25);
+        }
+        .feat-desc {
+          font-size: 0.86rem;
+          color: #f8fafc;
+          line-height: 1.6;
+          font-weight: 500;
+        }
+
+        /* Plan Action Bar */
+        .plan-summary-action-bar {
+          background: linear-gradient(165deg, rgba(12, 28, 58, 0.9) 0%, rgba(8, 20, 46, 0.95) 100%);
+          backdrop-filter: blur(24px);
+          border: 1px solid rgba(186, 230, 253, 0.3);
+          border-radius: 20px;
+          padding: 24px;
+          display: flex;
+          flex-wrap: wrap;
+          align-items: center;
+          justify-content: space-between;
+          gap: 16px;
+          box-shadow: 0 15px 35px rgba(0, 0, 0, 0.5);
+        }
+        .city-name-highlight {
+          color: #7dd3fc;
+          font-weight: 900;
+        }
+        .badge-ready {
+          display: inline-flex;
+          align-items: center;
+          gap: 5px;
+          padding: 4px 10px;
+          border-radius: 9999px;
+          background: rgba(16, 185, 129, 0.2);
+          border: 1px solid rgba(16, 185, 129, 0.4);
+          color: #34d399;
+          font-size: 0.75rem;
+          font-weight: 700;
+        }
+        .badge-luxury {
+          display: inline-flex;
+          align-items: center;
+          gap: 5px;
+          padding: 4px 10px;
+          border-radius: 9999px;
+          background: rgba(99, 102, 241, 0.2);
+          border: 1px solid rgba(99, 102, 241, 0.4);
+          color: #a5b4fc;
+          font-size: 0.75rem;
+          font-weight: 700;
+        }
+        .plan-summary-title {
+          font-size: 1.55rem;
+          font-weight: 800;
+          color: #ffffff;
+        }
+        .plan-action-btn {
+          display: inline-flex;
+          align-items: center;
+          gap: 6px;
+          padding: 8px 14px;
+          border-radius: 10px;
+          background: rgba(255, 255, 255, 0.08);
+          border: 1px solid rgba(255, 255, 255, 0.15);
+          color: #f1f5f9;
+          font-size: 0.84rem;
+          font-weight: 600;
+          cursor: pointer;
           transition: all 0.2s ease;
         }
-        .plan-item-row:hover {
-          background: rgba(255, 255, 255, 0.05);
-          border-color: rgba(255, 255, 255, 0.12);
+        .plan-action-btn:hover {
+          background: rgba(255, 255, 255, 0.15);
+          color: #ffffff;
         }
-        .plan-item-img {
-          width: 72px;
-          height: 72px;
+        .plan-save-btn {
+          display: inline-flex;
+          align-items: center;
+          gap: 6px;
+          padding: 9px 18px;
           border-radius: 10px;
-          object-fit: cover;
-          flex-shrink: 0;
-          background: #1e293b;
+          background: linear-gradient(135deg, #0284c7 0%, #4f46e5 100%);
+          border: 1px solid rgba(56, 189, 248, 0.35);
+          color: #ffffff;
+          font-size: 0.85rem;
+          font-weight: 700;
+          cursor: pointer;
+          box-shadow: 0 4px 14px rgba(2, 132, 199, 0.35);
+          transition: all 0.2s ease;
+        }
+        .plan-save-btn:hover:not(:disabled) {
+          transform: translateY(-1px);
+          filter: brightness(1.1);
+        }
+
+        /* Narrative & Cards */
+        .plan-narrative-card {
+          background: #07152e !important;
+          border: 1.5px solid rgba(56, 189, 248, 0.45) !important;
+          border-left: 5px solid #38bdf8 !important;
+          border-radius: 14px;
+          padding: 20px 24px;
+          box-shadow: 0 10px 30px rgba(0, 0, 0, 0.65) !important;
+        }
+        .plan-narrative-text {
+          font-size: 1.05rem !important;
+          color: #ffffff !important;
+          font-weight: 600 !important;
+          font-style: normal !important;
+          line-height: 1.7;
+          text-shadow: 0 1px 4px rgba(0, 0, 0, 0.8);
+        }
+        .plan-weather-card, .plan-culinary-card, .plan-etiquette-card, .day-breakdown-card {
+          background: #07152e !important;
+          border: 2px solid rgba(56, 189, 248, 0.45) !important;
+          border-radius: 20px;
+          padding: 24px 26px;
+          box-shadow: 0 16px 45px rgba(0, 0, 0, 0.75) !important;
+        }
+        .weather-card-title, .culinary-card-title, .etiquette-card-title {
+          font-size: 1.05rem !important;
+          font-weight: 900 !important;
+          color: #ffffff !important;
+          text-transform: uppercase;
+          letter-spacing: 0.05em;
+          text-shadow: 0 1px 4px rgba(0, 0, 0, 0.8);
+        }
+        .culinary-card-desc {
+          font-size: 0.9rem !important;
+          color: #f1f5f9 !important;
+          font-weight: 600 !important;
+          margin-top: 3px;
         }
         .weather-day-chip {
-          background: rgba(255, 255, 255, 0.03);
-          border: 1px solid rgba(255, 255, 255, 0.07);
-          border-radius: 10px;
-          padding: 8px 10px;
+          background: #0d2249 !important;
+          border: 1.5px solid rgba(125, 211, 252, 0.4) !important;
+          border-radius: 12px;
+          padding: 12px;
           text-align: center;
         }
-        .culinary-dish-card {
-          background: rgba(255, 255, 255, 0.03);
-          border: 1px solid rgba(245, 158, 11, 0.15);
-          border-radius: 12px;
-          padding: 12px 14px;
+        .weather-day-label {
+          font-size: 0.78rem !important;
+          color: #cbd5e1 !important;
+          display: block;
+          font-weight: 700 !important;
         }
-        .insider-tip-pill {
-          background: rgba(245, 158, 11, 0.08);
-          border: 1px solid rgba(245, 158, 11, 0.2);
+        .weather-temp-range {
+          font-size: 1.15rem !important;
+          font-weight: 900 !important;
+          color: #ffffff !important;
+          display: block;
+          margin-top: 4px;
+        }
+        .weather-cond-text {
+          font-size: 0.8rem !important;
+          color: #38bdf8 !important;
+          display: block;
+          font-weight: 800 !important;
+          margin-top: 2px;
+        }
+        .culinary-dish-card {
+          background: #0d2249 !important;
+          border: 1.5px solid rgba(251, 191, 36, 0.5) !important;
+          border-radius: 14px;
+          padding: 16px 18px;
+        }
+        .dish-name {
+          font-size: 1.1rem !important;
+          font-weight: 900 !important;
+          color: #fde047 !important;
+          text-shadow: 0 0 10px rgba(253, 224, 71, 0.5);
+        }
+        .dish-time-badge {
+          font-size: 0.72rem !important;
+          font-weight: 800 !important;
+          padding: 3px 10px;
           border-radius: 10px;
-          padding: 8px 12px;
+          background: rgba(245, 158, 11, 0.28) !important;
+          color: #fde047 !important;
+          border: 1.5px solid #fbbf24 !important;
+        }
+        .dish-desc {
+          font-size: 0.88rem !important;
+          color: #ffffff !important;
+          line-height: 1.6;
+          margin-top: 6px;
+          font-weight: 500;
+        }
+        .etiquette-tip-row {
+          display: flex;
+          align-items: flex-start;
+          gap: 12px;
+          font-size: 0.95rem !important;
+          color: #ffffff !important;
+          font-weight: 600;
+        }
+        .etiquette-bullet {
+          width: 8px;
+          height: 8px;
+          border-radius: 50%;
+          background: #fbbf24;
+          box-shadow: 0 0 10px #fbbf24;
+          margin-top: 7px;
+          flex-shrink: 0;
+        }
+        .day-card-header {
+          border-bottom: 1px solid rgba(255, 255, 255, 0.15);
+          padding-bottom: 14px;
+          margin-bottom: 16px;
+        }
+        .day-number-pill {
+          font-size: 0.82rem !important;
+          font-weight: 900 !important;
+          text-transform: uppercase;
+          letter-spacing: 0.08em;
+          color: #38bdf8 !important;
+          background: rgba(56, 189, 248, 0.18);
+          border: 1px solid rgba(56, 189, 248, 0.4);
+          padding: 3px 10px;
+          border-radius: 8px;
+        }
+        .day-transit-pill {
+          display: inline-flex;
+          align-items: center;
+          gap: 5px;
+          font-size: 0.78rem !important;
+          font-weight: 800 !important;
+          padding: 3px 10px;
+          border-radius: 10px;
+          background: rgba(14, 165, 233, 0.2);
+          border: 1px solid #38bdf8;
+          color: #7dd3fc;
+        }
+        .day-title {
+          font-size: 1.55rem !important;
+          font-weight: 900 !important;
+          color: #ffffff !important;
+          text-shadow: 0 2px 8px rgba(0, 0, 0, 0.8);
+          margin-top: 4px;
+        }
+        .day-theme {
+          font-size: 1rem !important;
+          color: #7dd3fc !important;
+          font-weight: 800 !important;
+          margin-top: 3px;
+        }
+        .day-insider-tip {
+          display: flex;
+          align-items: center;
+          gap: 10px;
+          padding: 14px 18px;
+          border-radius: 12px;
+          background: rgba(245, 158, 11, 0.25) !important;
+          border: 2px solid #fde047 !important;
+          font-size: 0.95rem !important;
+          color: #ffffff !important;
+          font-weight: 700;
+          margin-bottom: 16px;
+          box-shadow: 0 4px 18px rgba(245, 158, 11, 0.25);
         }
         .transit-connector-bar {
           display: flex;
           align-items: center;
           gap: 8px;
-          padding: 0 12px;
+          padding: 0 16px;
         }
         .transit-connector-line {
           flex: 1;
           height: 1px;
-          background: rgba(255, 255, 255, 0.08);
+          background: rgba(186, 230, 253, 0.35);
         }
         .transit-connector-badge {
           display: inline-flex;
           align-items: center;
-          gap: 4px;
-          font-size: 0.68rem;
-          color: #94a3b8;
-          background: rgba(14, 165, 233, 0.08);
-          border: 1px dashed rgba(14, 165, 233, 0.25);
-          padding: 2px 8px;
+          gap: 5px;
+          font-size: 0.78rem;
+          color: #ffffff;
+          background: #0d2249;
+          border: 1.5px solid #38bdf8;
+          padding: 5px 14px;
           border-radius: 9999px;
+          font-weight: 700;
+        }
+        .plan-item-row {
+          display: flex;
+          gap: 16px;
+          padding: 18px;
+          border-radius: 16px;
+          background: #0d2249 !important;
+          border: 1.5px solid rgba(125, 211, 252, 0.4) !important;
+          align-items: flex-start;
+          transition: all 0.2s ease;
+          box-shadow: 0 6px 18px rgba(0, 0, 0, 0.5);
+        }
+        .plan-item-row:hover {
+          background: #112a58 !important;
+          border-color: #38bdf8 !important;
+          transform: translateY(-2px);
+          box-shadow: 0 10px 30px rgba(56, 189, 248, 0.35);
+        }
+        .plan-item-img {
+          width: 90px;
+          height: 90px;
+          border-radius: 12px;
+          object-fit: cover;
+          flex-shrink: 0;
+          background: #0f172a;
+          border: 1.5px solid rgba(186, 230, 253, 0.35);
+        }
+        .timeslot-badge {
+          font-size: 0.76rem;
+          font-weight: 900;
+          padding: 4px 11px;
+          border-radius: 8px;
+          letter-spacing: 0.03em;
+        }
+        .timeslot-morning {
+          background: rgba(245, 158, 11, 0.3);
+          color: #fde047;
+          border: 1.5px solid #fbbf24;
+        }
+        .timeslot-afternoon {
+          background: rgba(14, 165, 233, 0.3);
+          color: #7dd3fc;
+          border: 1.5px solid #38bdf8;
+        }
+        .timeslot-evening {
+          background: rgba(139, 92, 246, 0.3);
+          color: #d8b4fe;
+          border: 1.5px solid #c084fc;
+        }
+        .item-category-tag {
+          font-size: 0.82rem;
+          color: #38bdf8;
+          font-weight: 800;
+        }
+        .item-rating-tag {
+          font-size: 0.82rem;
+          color: #fbbf24;
+          font-weight: 900;
+        }
+        .item-name {
+          font-size: 1.25rem !important;
+          font-weight: 900 !important;
+          color: #ffffff !important;
+          margin-top: 4px;
+          text-shadow: 0 2px 8px rgba(0, 0, 0, 0.8);
+        }
+        .item-address {
+          font-size: 0.88rem !important;
+          color: #93c5fd !important;
+          font-weight: 700 !important;
+          margin-top: 3px;
+        }
+        .item-note {
+          font-size: 0.92rem !important;
+          color: #ffffff !important;
+          font-weight: 600 !important;
+          margin-top: 10px;
+          line-height: 1.6;
+          background: #040c1c !important;
+          padding: 12px 16px;
+          border-radius: 10px;
+          border: 1.5px solid rgba(56, 189, 248, 0.4) !important;
+        }
+        .item-remove-btn {
+          color: #cbd5e1;
+          padding: 6px;
+          border-radius: 8px;
+          transition: all 0.15s ease;
+        }
+        .item-remove-btn:hover {
+          color: #fb7185;
+          background: rgba(244, 63, 94, 0.2);
         }
 
         @media print {
@@ -1006,10 +1844,14 @@ export const SmartPlannerPage: React.FC<SmartPlannerPageProps> = ({ onNavigate }
             background: #ffffff !important;
             color: #000000 !important;
           }
+          .planner-sky-theme-wrapper {
+            background: none !important;
+          }
+          .planner-sky-backdrop,
+          .planner-sky-sunbeam-glow,
+          .planner-sky-cloud-mist,
           .planner-header,
           .planner-config-panel,
-          .ai-settings-toggle-btn,
-          .ai-settings-card,
           nav,
           footer,
           .btn {
@@ -1021,20 +1863,10 @@ export const SmartPlannerPage: React.FC<SmartPlannerPageProps> = ({ onNavigate }
           .planner-results-panel {
             width: 100% !important;
           }
-          .glass-card, .glass-panel {
-            background: transparent !important;
-            border: 1px solid #ddd !important;
-            color: #000 !important;
-            box-shadow: none !important;
-          }
-          .text-white {
-            color: #000 !important;
-          }
-          .text-slate-400, .text-slate-300 {
-            color: #444 !important;
-          }
         }
       `}</style>
     </div>
   );
 };
+
+export default SmartPlannerPage;

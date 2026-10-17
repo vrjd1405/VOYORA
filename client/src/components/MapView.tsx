@@ -36,7 +36,7 @@ export const MapView: React.FC<MapViewProps> = ({
       L.control.zoom({ position: 'topright' }).addTo(map);
 
       // Luxury MapTiler Cloud Dark Tiles with CartoDB fallback
-      const maptilerKey = (import.meta as any).env?.VITE_MAPTILER_API_KEY || '0DCejl9s9v3Lhj62YAQ0';
+      const maptilerKey = (import.meta as any).env?.VITE_MAPTILER_API_KEY || '';
       const tileUrl = maptilerKey
         ? `https://api.maptiler.com/maps/streets-v2-dark/{z}/{x}/{y}.png?key=${maptilerKey}`
         : 'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png';

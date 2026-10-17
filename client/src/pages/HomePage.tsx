@@ -58,16 +58,17 @@ export const HomePage: React.FC<HomePageProps> = ({ onNavigate }) => {
       <section className="hero-section">
         <div className="hero-background-wrapper">
           <img
-            src="https://images.unsplash.com/photo-1469854523086-cc02fe5d8800?auto=format&fit=crop&w=2000&q=85"
-            alt="Cinematic Global Travel"
+            src="https://images.unsplash.com/photo-1506905925346-21bda4d32df4?auto=format&fit=crop&w=2400&q=85"
+            alt="Majestic Alpine Horizon"
             className="hero-bg-image"
           />
           <div className="hero-gradient-overlay" />
+          <div className="hero-radial-glow" />
         </div>
 
         <div className="container hero-content-container">
           <div className="hero-badge animate-fade-in">
-            <Sparkles size={14} className="text-sky-400" />
+            <Sparkles size={14} className="hero-badge-icon" />
             <span>THE NEXT GENERATION TRAVEL ARCHITECT</span>
           </div>
 
@@ -88,7 +89,7 @@ export const HomePage: React.FC<HomePageProps> = ({ onNavigate }) => {
                 type="text"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                placeholder="Search city, landmark, or vibe (e.g. Madurai, Meenakshi, Paris, Zen)..."
+                placeholder="Search city, landmark, or vibe (e.g. Madurai, Meenakshi, Paris, Zermatt)..."
                 className="hero-search-input"
               />
             </div>
@@ -116,43 +117,36 @@ export const HomePage: React.FC<HomePageProps> = ({ onNavigate }) => {
             </button>
           </form>
 
-          {/* Quick Destination Pills with Region Toggle */}
+          {/* Region Tabs & Quick City Navigation */}
           <div className="hero-quick-cities animate-fade-in delay-300">
-            <div className="flex items-center gap-2 mb-2 w-full">
-              <span className="quick-label">Explore Regions:</span>
-              <button
-                type="button"
-                onClick={() => setActiveRegion('tamil_nadu')}
-                className={`text-[11px] font-bold px-2.5 py-1 rounded-full transition ${
-                  activeRegion === 'tamil_nadu'
-                    ? 'bg-sky-500 text-slate-950 font-extrabold shadow-[0_0_12px_rgba(56,189,248,0.4)]'
-                    : 'bg-slate-800/80 text-slate-400 hover:text-white border border-slate-700/60'
-                }`}
-              >
-                Tamil Nadu
-              </button>
-              <button
-                type="button"
-                onClick={() => setActiveRegion('india')}
-                className={`text-[11px] font-bold px-2.5 py-1 rounded-full transition ${
-                  activeRegion === 'india'
-                    ? 'bg-sky-500 text-slate-950 font-extrabold shadow-[0_0_12px_rgba(56,189,248,0.4)]'
-                    : 'bg-slate-800/80 text-slate-400 hover:text-white border border-slate-700/60'
-                }`}
-              >
-                All India
-              </button>
-              <button
-                type="button"
-                onClick={() => setActiveRegion('global')}
-                className={`text-[11px] font-bold px-2.5 py-1 rounded-full transition ${
-                  activeRegion === 'global'
-                    ? 'bg-sky-500 text-slate-950 font-extrabold shadow-[0_0_12px_rgba(56,189,248,0.4)]'
-                    : 'bg-slate-800/80 text-slate-400 hover:text-white border border-slate-700/60'
-                }`}
-              >
-                Global Capitals
-              </button>
+            <div className="hero-region-nav">
+              <span className="hero-region-label">EXPLORE REGIONS:</span>
+              <div className="hero-region-tabs">
+                <button
+                  type="button"
+                  onClick={() => setActiveRegion('tamil_nadu')}
+                  className={`hero-region-tab ${activeRegion === 'tamil_nadu' ? 'active' : ''}`}
+                >
+                  <span>Tamil Nadu</span>
+                  <span className="region-badge-count">8</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setActiveRegion('india')}
+                  className={`hero-region-tab ${activeRegion === 'india' ? 'active' : ''}`}
+                >
+                  <span>All India</span>
+                  <span className="region-badge-count">5</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setActiveRegion('global')}
+                  className={`hero-region-tab ${activeRegion === 'global' ? 'active' : ''}`}
+                >
+                  <span>Global Capitals</span>
+                  <span className="region-badge-count">6</span>
+                </button>
+              </div>
             </div>
 
             <div className="quick-cities-list">
@@ -168,22 +162,22 @@ export const HomePage: React.FC<HomePageProps> = ({ onNavigate }) => {
               ))}
             </div>
 
-            {/* Live Reliability Feature Badges */}
-            <div className="flex flex-wrap items-center gap-3 pt-3 mt-1 border-t border-slate-800/60 text-[11px] text-slate-400 w-full">
-              <span className="flex items-center gap-1 text-emerald-400 font-semibold">
-                <ShieldCheck size={13} />
+            {/* Live Reliability Feature Ribbon */}
+            <div className="hero-trust-ribbon">
+              <div className="trust-pill trust-emerald">
+                <ShieldCheck size={14} className="trust-icon" />
                 <span>100% Strict City Isolation</span>
-              </span>
-              <span className="text-slate-600">•</span>
-              <span className="flex items-center gap-1 text-sky-400 font-semibold">
-                <CloudSun size={13} />
+              </div>
+              <span className="trust-separator">•</span>
+              <div className="trust-pill trust-sky">
+                <CloudSun size={14} className="trust-icon" />
                 <span>Real Open-Meteo Satellite Weather</span>
-              </span>
-              <span className="text-slate-600">•</span>
-              <span className="flex items-center gap-1 text-violet-400 font-semibold">
-                <Compass size={13} />
+              </div>
+              <span className="trust-separator">•</span>
+              <div className="trust-pill trust-violet">
+                <Compass size={14} className="trust-icon" />
                 <span>Geoapify Turn-by-Turn Transit</span>
-              </span>
+              </div>
             </div>
           </div>
         </div>
@@ -356,87 +350,115 @@ export const HomePage: React.FC<HomePageProps> = ({ onNavigate }) => {
         }
         .hero-section {
           position: relative;
-          min-height: 85vh;
+          min-height: 88vh;
           display: flex;
           align-items: center;
-          padding: 80px 0;
+          padding: 60px 0 80px 0;
+          overflow: hidden;
         }
         .hero-background-wrapper {
           position: absolute;
           inset: 0;
           overflow: hidden;
           z-index: 0;
+          pointer-events: none;
         }
         .hero-bg-image {
           width: 100%;
           height: 100%;
           object-fit: cover;
-          filter: brightness(0.4) saturate(1.2);
+          object-position: center 35%;
+          opacity: 0.32;
+          filter: brightness(0.65) contrast(1.15) saturate(1.25);
+          mask-image: radial-gradient(ellipse 90% 80% at 50% 35%, black 40%, transparent 100%);
+          -webkit-mask-image: radial-gradient(ellipse 90% 80% at 50% 35%, black 40%, transparent 100%);
         }
         .hero-gradient-overlay {
           position: absolute;
           inset: 0;
-          background: linear-gradient(180deg, rgba(10, 15, 29, 0.4) 0%, rgba(10, 15, 29, 0.85) 70%, #0a0f1d 100%);
+          background: linear-gradient(180deg, rgba(7, 11, 22, 0.45) 0%, rgba(7, 11, 22, 0.7) 60%, #070b16 100%);
+        }
+        .hero-radial-glow {
+          position: absolute;
+          top: 20%;
+          left: 50%;
+          transform: translate(-50%, -50%);
+          width: 700px;
+          height: 380px;
+          background: radial-gradient(circle, rgba(56, 189, 248, 0.12) 0%, rgba(129, 140, 248, 0.08) 45%, transparent 70%);
+          filter: blur(60px);
+          pointer-events: none;
         }
         .hero-content-container {
           position: relative;
           z-index: 10;
-          max-width: 900px;
+          max-width: 920px;
         }
         .hero-badge {
           display: inline-flex;
           align-items: center;
           gap: 8px;
-          padding: 6px 14px;
-          border-radius: 30px;
-          background: rgba(15, 23, 42, 0.85);
+          padding: 7px 16px;
+          border-radius: 9999px;
+          background: rgba(15, 23, 42, 0.75);
           backdrop-filter: blur(12px);
+          -webkit-backdrop-filter: blur(12px);
           border: 1px solid rgba(56, 189, 248, 0.3);
-          color: var(--accent-sky);
-          font-size: 0.75rem;
+          color: #38bdf8;
+          font-size: 0.78rem;
           font-weight: 700;
           letter-spacing: 0.08em;
-          margin-bottom: 24px;
+          margin-bottom: 22px;
+          box-shadow: 0 0 20px rgba(56, 189, 248, 0.15);
+        }
+        .hero-badge-icon {
+          color: #38bdf8;
+          animation: spinPulse 6s linear infinite;
+        }
+        @keyframes spinPulse {
+          0%, 100% { transform: scale(1); }
+          50% { transform: scale(1.15); filter: drop-shadow(0 0 6px #38bdf8); }
         }
         .hero-title {
-          font-size: 4rem;
+          font-size: 4.2rem;
           font-weight: 800;
-          line-height: 1.08;
+          line-height: 1.06;
           color: #ffffff;
           margin-bottom: 20px;
-          letter-spacing: -0.03em;
+          letter-spacing: -0.035em;
         }
         .hero-title-gradient {
-          background: linear-gradient(135deg, #38bdf8 0%, #818cf8 50%, #c084fc 100%);
+          background: linear-gradient(135deg, #38bdf8 0%, #818cf8 45%, #c084fc 100%);
           -webkit-background-clip: text;
           -webkit-text-fill-color: transparent;
         }
         .hero-subtitle {
-          font-size: 1.2rem;
+          font-size: 1.15rem;
           color: #cbd5e1;
-          max-width: 680px;
-          line-height: 1.6;
-          margin-bottom: 36px;
+          max-width: 700px;
+          line-height: 1.65;
+          margin-bottom: 34px;
         }
         @media (max-width: 768px) {
           .hero-title {
-            font-size: 2.6rem;
+            font-size: 2.7rem;
           }
           .hero-subtitle {
             font-size: 1rem;
           }
         }
         .hero-search-glass-card {
-          background: rgba(15, 23, 42, 0.85);
-          backdrop-filter: blur(20px);
-          border: 1px solid var(--border-glass);
+          background: rgba(15, 23, 42, 0.8);
+          backdrop-filter: blur(24px);
+          -webkit-backdrop-filter: blur(24px);
+          border: 1px solid rgba(255, 255, 255, 0.14);
           border-radius: 18px;
-          padding: 10px 12px;
+          padding: 10px 14px;
           display: flex;
           align-items: center;
-          gap: 12px;
-          box-shadow: 0 20px 40px -10px rgba(0, 0, 0, 0.6);
-          margin-bottom: 24px;
+          gap: 14px;
+          box-shadow: 0 20px 45px -10px rgba(0, 0, 0, 0.7), inset 0 1px 0 rgba(255, 255, 255, 0.1);
+          margin-bottom: 28px;
         }
         @media (max-width: 768px) {
           .hero-search-glass-card {
@@ -453,10 +475,10 @@ export const HomePage: React.FC<HomePageProps> = ({ onNavigate }) => {
           align-items: center;
           gap: 12px;
           flex: 2;
-          padding: 0 10px;
+          padding: 0 8px;
         }
         .search-icon {
-          color: var(--accent-sky);
+          color: #38bdf8;
         }
         .hero-search-input {
           width: 100%;
@@ -467,12 +489,12 @@ export const HomePage: React.FC<HomePageProps> = ({ onNavigate }) => {
           outline: none;
         }
         .hero-search-input::placeholder {
-          color: var(--text-muted);
+          color: #64748b;
         }
         .search-divider {
           width: 1px;
           height: 32px;
-          background: var(--border-glass);
+          background: rgba(255, 255, 255, 0.12);
         }
         .search-category-dropdown-wrap {
           flex: 1;
@@ -481,8 +503,9 @@ export const HomePage: React.FC<HomePageProps> = ({ onNavigate }) => {
           width: 100%;
           background: transparent;
           border: none;
-          color: var(--text-secondary);
-          font-size: 0.9rem;
+          color: #cbd5e1;
+          font-size: 0.92rem;
+          font-weight: 500;
           outline: none;
           cursor: pointer;
         }
@@ -493,17 +516,69 @@ export const HomePage: React.FC<HomePageProps> = ({ onNavigate }) => {
         .hero-submit-btn {
           padding: 12px 28px;
           border-radius: 12px;
+          font-size: 0.95rem;
+          font-weight: 700;
         }
         .hero-quick-cities {
+          display: flex;
+          flex-direction: column;
+          gap: 16px;
+          width: 100%;
+        }
+        .hero-region-nav {
           display: flex;
           align-items: center;
           gap: 12px;
           flex-wrap: wrap;
         }
-        .quick-label {
-          font-size: 0.85rem;
-          color: var(--text-muted);
-          font-weight: 500;
+        .hero-region-label {
+          font-size: 0.72rem;
+          font-weight: 800;
+          letter-spacing: 0.08em;
+          color: #64748b;
+        }
+        .hero-region-tabs {
+          display: flex;
+          align-items: center;
+          gap: 8px;
+          flex-wrap: wrap;
+        }
+        .hero-region-tab {
+          display: inline-flex;
+          align-items: center;
+          gap: 6px;
+          padding: 6px 14px;
+          border-radius: 9999px;
+          font-size: 0.82rem;
+          font-weight: 600;
+          color: #94a3b8;
+          background: rgba(15, 23, 42, 0.65);
+          border: 1px solid rgba(255, 255, 255, 0.08);
+          transition: all 0.2s ease;
+        }
+        .hero-region-tab:hover {
+          color: #ffffff;
+          border-color: rgba(56, 189, 248, 0.35);
+          background: rgba(30, 41, 59, 0.8);
+        }
+        .hero-region-tab.active {
+          color: #030712;
+          background: #38bdf8;
+          border-color: #38bdf8;
+          font-weight: 700;
+          box-shadow: 0 0 16px rgba(56, 189, 248, 0.45);
+        }
+        .region-badge-count {
+          font-size: 0.7rem;
+          padding: 1px 6px;
+          border-radius: 10px;
+          background: rgba(0, 0, 0, 0.2);
+          color: currentColor;
+          font-weight: 700;
+        }
+        .hero-region-tab.active .region-badge-count {
+          background: rgba(0, 0, 0, 0.25);
+          color: #030712;
         }
         .quick-cities-list {
           display: flex;
@@ -515,20 +590,43 @@ export const HomePage: React.FC<HomePageProps> = ({ onNavigate }) => {
           display: inline-flex;
           align-items: center;
           gap: 6px;
-          padding: 6px 12px;
+          padding: 6px 14px;
           border-radius: 20px;
-          background: rgba(255, 255, 255, 0.06);
-          border: 1px solid var(--border-subtle);
-          color: #ffffff;
-          font-size: 0.82rem;
+          background: rgba(255, 255, 255, 0.05);
+          border: 1px solid rgba(255, 255, 255, 0.08);
+          color: #f1f5f9;
+          font-size: 0.84rem;
           font-weight: 500;
           transition: all var(--transition-fast);
         }
         .quick-city-chip:hover {
-          background: rgba(56, 189, 248, 0.15);
-          border-color: var(--accent-sky);
+          background: rgba(56, 189, 248, 0.12);
+          border-color: #38bdf8;
+          color: #ffffff;
           transform: translateY(-1px);
         }
+        .hero-trust-ribbon {
+          display: flex;
+          align-items: center;
+          gap: 12px;
+          flex-wrap: wrap;
+          padding-top: 14px;
+          border-top: 1px solid rgba(255, 255, 255, 0.08);
+          font-size: 0.8rem;
+          margin-top: 4px;
+        }
+        .trust-pill {
+          display: inline-flex;
+          align-items: center;
+          gap: 6px;
+          font-weight: 600;
+          letter-spacing: 0.01em;
+        }
+        .trust-emerald { color: #34d399; }
+        .trust-sky { color: #38bdf8; }
+        .trust-violet { color: #a78bfa; }
+        .trust-icon { flex-shrink: 0; }
+        .trust-separator { color: #475569; }
         .section-header-row {
           display: flex;
           align-items: flex-end;

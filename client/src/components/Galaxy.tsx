@@ -616,15 +616,19 @@ export const Galaxy: React.FC<GalaxyProps> = ({
   return (
     <div
       ref={containerRef}
-      className={className || 'fixed inset-0 pointer-events-none -z-10 overflow-hidden'}
+      className={className || 'voyora-galaxy-canvas-wrap'}
       style={{
         position: 'fixed',
-        inset: 0,
+        top: 0,
+        left: 0,
+        right: 0,
+        bottom: 0,
         width: '100vw',
         height: '100vh',
         pointerEvents: 'none',
-        zIndex: -10,
-        backgroundColor: '#0a0f1d',
+        zIndex: 0,
+        backgroundColor: 'transparent',
+        overflow: 'hidden',
         ...style,
       }}
       {...rest}

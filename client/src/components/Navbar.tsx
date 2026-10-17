@@ -16,7 +16,7 @@ export const Navbar: React.FC<NavbarProps> = ({ currentPath, onNavigate }) => {
   const navLinks = [
     { path: '/', label: 'Home', icon: Compass },
     { path: '/explore', label: 'Explore', icon: MapPin },
-    { path: '/planner', label: 'Smart Planner', icon: Sparkles, badge: 'AI/Rule' },
+    { path: '/planner', label: 'Smart Planner', icon: Sparkles, badge: 'AI Journey' },
     { path: '/trip', label: 'My Trip', icon: Calendar, count: tripItems.length },
     { path: '/favorites', label: 'Favorites', icon: Heart, count: favorites.length },
   ];
@@ -139,10 +139,11 @@ export const Navbar: React.FC<NavbarProps> = ({ currentPath, onNavigate }) => {
           position: sticky;
           top: 0;
           z-index: 1000;
-          background: rgba(10, 15, 29, 0.85);
-          backdrop-filter: blur(16px);
-          -webkit-backdrop-filter: blur(16px);
-          border-bottom: 1px solid var(--border-subtle);
+          background: rgba(5, 16, 38, 0.95);
+          backdrop-filter: blur(24px);
+          -webkit-backdrop-filter: blur(24px);
+          border-bottom: 1.5px solid rgba(56, 189, 248, 0.45);
+          box-shadow: 0 4px 30px rgba(0, 0, 0, 0.65);
         }
         .navbar-container {
           display: flex;
@@ -157,25 +158,28 @@ export const Navbar: React.FC<NavbarProps> = ({ currentPath, onNavigate }) => {
           cursor: pointer;
         }
         .brand-icon-wrapper {
-          width: 36px;
-          height: 36px;
+          width: 38px;
+          height: 38px;
           border-radius: 10px;
-          background: var(--gradient-primary);
+          background: linear-gradient(135deg, #0284c7 0%, #2563eb 100%);
+          border: 1.5px solid #38bdf8;
           display: flex;
           align-items: center;
           justify-content: center;
           color: #ffffff;
-          box-shadow: 0 4px 12px rgba(37, 99, 235, 0.4);
+          box-shadow: 0 4px 14px rgba(2, 132, 199, 0.5);
         }
         .brand-name {
           font-family: var(--font-display);
-          font-size: 1.5rem;
-          font-weight: 800;
+          font-size: 1.55rem;
+          font-weight: 900;
           letter-spacing: -0.04em;
           color: #ffffff;
+          text-shadow: 0 2px 8px rgba(0, 0, 0, 0.6);
         }
         .brand-name-accent {
-          color: var(--accent-sky);
+          color: #38bdf8;
+          text-shadow: 0 0 12px rgba(56, 189, 248, 0.7);
         }
         .desktop-nav {
           display: flex;
@@ -186,33 +190,36 @@ export const Navbar: React.FC<NavbarProps> = ({ currentPath, onNavigate }) => {
           display: flex;
           align-items: center;
           gap: 8px;
-          padding: 8px 14px;
-          border-radius: 8px;
-          font-size: 0.9rem;
-          font-weight: 500;
-          color: var(--text-secondary);
+          padding: 8px 15px;
+          border-radius: 9px;
+          font-size: 0.92rem;
+          font-weight: 700;
+          color: #ffffff;
           transition: all var(--transition-fast);
         }
         .nav-link-btn:hover {
-          color: var(--text-primary);
-          background: rgba(255, 255, 255, 0.05);
+          color: #38bdf8;
+          background: rgba(56, 189, 248, 0.16);
         }
         .nav-link-btn.active {
-          color: #ffffff;
-          background: rgba(56, 189, 248, 0.12);
-          font-weight: 600;
+          color: #38bdf8;
+          background: rgba(14, 165, 233, 0.22);
+          font-weight: 800;
+          border: 1px solid rgba(56, 189, 248, 0.45);
         }
         .nav-link-btn.active .nav-icon {
-          color: var(--accent-sky);
+          color: #38bdf8;
         }
         .nav-badge-pill {
-          font-size: 0.65rem;
-          padding: 2px 6px;
+          font-size: 0.68rem;
+          padding: 2px 7px;
           border-radius: 10px;
-          background: rgba(139, 92, 246, 0.2);
-          color: var(--accent-violet);
-          font-weight: 700;
-          letter-spacing: 0.04em;
+          background: rgba(245, 158, 11, 0.25);
+          border: 1px solid #fbbf24;
+          color: #fde047;
+          font-weight: 800;
+          letter-spacing: 0.02em;
+        }  letter-spacing: 0.04em;
         }
         .nav-count-pill {
           font-size: 0.7rem;

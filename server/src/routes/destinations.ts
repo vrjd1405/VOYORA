@@ -6,12 +6,13 @@ const router = Router();
 // GET /api/destinations - Search & discover destinations
 router.get('/', async (req: Request, res: Response) => {
   try {
-    const { q, category, city, limit, page, sort } = req.query;
+    const { q, category, city, country, limit, page, sort } = req.query;
 
     const result = await searchPlaces({
       q: q as string,
       category: category as string,
       city: city as string,
+      country: country as string,
       limit: limit ? Number(limit) : 12,
       page: page ? Number(page) : 1,
       sort: sort as string,
@@ -74,7 +75,7 @@ router.get('/route', async (req: Request, res: Response) => {
     const tLat = parseFloat(toLat as string);
     const tLng = parseFloat(toLng as string);
 
-    const geoapifyKey = process.env.GEOAPIFY_API_KEY || '715d707e4ce3492c8ac0a46675cdace9';
+    const geoapifyKey = process.env.GEOAPIFY_API_KEY || '';
     if (geoapifyKey) {
       try {
         const routeUrl = `https://api.geoapify.com/v1/routing?waypoints=${fLat},${fLng}|${tLat},${tLng}&mode=${mode}&apiKey=${geoapifyKey}`;

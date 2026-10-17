@@ -4,6 +4,37 @@ import { Destination } from '../types';
 import { useFavorites } from '../context/FavoritesContext';
 import { useTrip } from '../context/TripContext';
 
+const COUNTRY_FLAGS: Record<string, string> = {
+  'India': '🇮🇳',
+  'France': '🇫🇷',
+  'Japan': '🇯🇵',
+  'United States': '🇺🇸',
+  'USA': '🇺🇸',
+  'Italy': '🇮🇹',
+  'Spain': '🇪🇸',
+  'Switzerland': '🇨🇭',
+  'Singapore': '🇸🇬',
+  'Greece': '🇬🇷',
+  'Egypt': '🇪🇬',
+  'Thailand': '🇹🇭',
+  'United Arab Emirates': '🇦🇪',
+  'UAE': '🇦🇪',
+  'United Kingdom': '🇬🇧',
+  'UK': '🇬🇧',
+  'Germany': '🇩🇪',
+  'Turkey': '🇹🇷',
+  'Indonesia': '🇮🇩',
+  'Australia': '🇦🇺',
+  'Canada': '🇨🇦',
+  'Netherlands': '🇳🇱',
+  'Brazil': '🇧🇷',
+};
+
+const getCountryFlag = (country?: string): string => {
+  if (!country) return '🌍';
+  return COUNTRY_FLAGS[country] || '📍';
+};
+
 interface DestinationCardProps {
   destination: Destination;
   onNavigate: (path: string) => void;
@@ -87,8 +118,8 @@ export const DestinationCard: React.FC<DestinationCardProps> = ({
 
       {/* Card Info Content */}
       <div className="dest-content">
-        <div className="dest-location-row">
-          <MapPin size={13} className="text-sky-400" />
+        <div className="dest-location-row flex items-center gap-1.5">
+          <span className="text-sm select-none" title={destination.country}>{getCountryFlag(destination.country)}</span>
           <span className="dest-city-country">{destination.city}, {destination.country}</span>
         </div>
 
@@ -129,10 +160,13 @@ export const DestinationCard: React.FC<DestinationCardProps> = ({
           flex-direction: column;
           cursor: pointer;
           position: relative;
+          background: #091a38 !important;
+          border: 1.5px solid rgba(56, 189, 248, 0.35) !important;
+          box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5) !important;
         }
         .dest-card-selected {
-          border-color: var(--accent-sky) !important;
-          box-shadow: 0 0 20px rgba(56, 189, 248, 0.35) !important;
+          border-color: #38bdf8 !important;
+          box-shadow: 0 0 24px rgba(56, 189, 248, 0.6) !important;
         }
         .dest-image-wrapper {
           position: relative;
@@ -159,12 +193,12 @@ export const DestinationCard: React.FC<DestinationCardProps> = ({
           position: absolute;
           top: 12px;
           left: 12px;
-          background: rgba(15, 23, 42, 0.85);
+          background: rgba(9, 24, 54, 0.95);
           backdrop-filter: blur(8px);
-          border: 1px solid rgba(255, 255, 255, 0.12);
-          color: var(--accent-sky);
-          font-size: 0.72rem;
-          font-weight: 700;
+          border: 1.5px solid #38bdf8;
+          color: #7dd3fc;
+          font-size: 0.74rem;
+          font-weight: 800;
           padding: 4px 10px;
           border-radius: 20px;
           letter-spacing: 0.02em;
@@ -176,9 +210,9 @@ export const DestinationCard: React.FC<DestinationCardProps> = ({
           width: 34px;
           height: 34px;
           border-radius: 50%;
-          background: rgba(15, 23, 42, 0.8);
+          background: rgba(9, 24, 54, 0.9);
           backdrop-filter: blur(8px);
-          border: 1px solid rgba(255, 255, 255, 0.12);
+          border: 1.5px solid rgba(255, 255, 255, 0.25);
           display: flex;
           align-items: center;
           justify-content: center;
@@ -192,12 +226,12 @@ export const DestinationCard: React.FC<DestinationCardProps> = ({
           position: absolute;
           bottom: 12px;
           right: 12px;
-          background: rgba(15, 23, 42, 0.85);
+          background: rgba(9, 24, 54, 0.95);
           backdrop-filter: blur(8px);
-          border: 1px solid rgba(255, 255, 255, 0.12);
+          border: 1.5px solid rgba(251, 191, 36, 0.5);
           color: #ffffff;
-          font-size: 0.75rem;
-          font-weight: 700;
+          font-size: 0.78rem;
+          font-weight: 800;
           padding: 3px 8px;
           border-radius: 12px;
           display: flex;
@@ -209,32 +243,36 @@ export const DestinationCard: React.FC<DestinationCardProps> = ({
           display: flex;
           flex-direction: column;
           flex: 1;
+          background: #091a38;
         }
         .dest-location-row {
           display: flex;
           align-items: center;
           gap: 6px;
-          font-size: 0.8rem;
-          color: var(--text-muted);
+          font-size: 0.84rem;
+          color: #7dd3fc;
+          font-weight: 700;
           margin-bottom: 6px;
         }
         .dest-city-country {
-          font-weight: 500;
+          font-weight: 700;
         }
         .dest-title {
-          font-size: 1.15rem;
-          font-weight: 700;
+          font-size: 1.18rem;
+          font-weight: 800;
           color: #ffffff;
           margin-bottom: 8px;
           display: -webkit-box;
           -webkit-line-clamp: 1;
           -webkit-box-orient: vertical;
           overflow: hidden;
+          text-shadow: 0 1px 4px rgba(0, 0, 0, 0.6);
         }
         .dest-snippet {
-          font-size: 0.85rem;
-          color: var(--text-secondary);
-          line-height: 1.5;
+          font-size: 0.88rem;
+          color: #f1f5f9;
+          font-weight: 500;
+          line-height: 1.55;
           margin-bottom: 16px;
           display: -webkit-box;
           -webkit-line-clamp: 2;

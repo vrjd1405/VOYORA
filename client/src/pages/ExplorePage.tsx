@@ -25,6 +25,7 @@ export const ExplorePage: React.FC<ExplorePageProps> = ({
   const [debouncedQuery, setDebouncedQuery] = useState(initialQuery);
   const [category, setCategory] = useState(initialCategory);
   const [city, setCity] = useState(initialCity);
+  const [country, setCountry] = useState('all');
   const [sort, setSort] = useState('featured');
   const [page, setPage] = useState(1);
   const [destinations, setDestinations] = useState<Destination[]>([]);
@@ -55,6 +56,7 @@ export const ExplorePage: React.FC<ExplorePageProps> = ({
         q: debouncedQuery,
         category: category !== 'all' ? category : undefined,
         city: city !== 'all' ? city : undefined,
+        country: country !== 'all' ? country : undefined,
         sort: sort !== 'featured' ? sort : undefined,
         page,
         limit: 12,
@@ -68,7 +70,7 @@ export const ExplorePage: React.FC<ExplorePageProps> = ({
     } finally {
       setLoading(false);
     }
-  }, [debouncedQuery, category, city, sort, page]);
+  }, [debouncedQuery, category, city, country, sort, page]);
 
   useEffect(() => {
     loadDestinations();
@@ -79,16 +81,49 @@ export const ExplorePage: React.FC<ExplorePageProps> = ({
     setDebouncedQuery('');
     setCategory('all');
     setCity('all');
+    setCountry('all');
     setSort('featured');
     setPage(1);
   };
 
   const hasActiveFilters = Boolean(
-    debouncedQuery || (category && category !== 'all') || (city && city !== 'all') || (sort && sort !== 'featured')
+    debouncedQuery ||
+      (category && category !== 'all') ||
+      (city && city !== 'all') ||
+      (country && country !== 'all') ||
+      (sort && sort !== 'featured')
   );
 
+  const countries = [
+    { id: 'all', label: 'All Realms', flag: '🌍' },
+    { id: 'Switzerland', label: 'Switzerland', flag: '🇨🇭' },
+    { id: 'India', label: 'India', flag: '🇮🇳' },
+    { id: 'Japan', label: 'Japan', flag: '🇯🇵' },
+    { id: 'France', label: 'France', flag: '🇫🇷' },
+    { id: 'Italy', label: 'Italy', flag: '🇮🇹' },
+    { id: 'Spain', label: 'Spain', flag: '🇪🇸' },
+    { id: 'Singapore', label: 'Singapore', flag: '🇸🇬' },
+    { id: 'Greece', label: 'Greece', flag: '🇬🇷' },
+    { id: 'Egypt', label: 'Egypt', flag: '🇪🇬' },
+    { id: 'Thailand', label: 'Thailand', flag: '🇹🇭' },
+    { id: 'United Arab Emirates', label: 'UAE', flag: '🇦🇪' },
+    { id: 'United Kingdom', label: 'UK', flag: '🇬🇧' },
+    { id: 'Germany', label: 'Germany', flag: '🇩🇪' },
+    { id: 'Turkey', label: 'Turkey', flag: '🇹🇷' },
+    { id: 'Indonesia', label: 'Indonesia', flag: '🇮🇩' },
+    { id: 'Australia', label: 'Australia', flag: '🇦🇺' },
+    { id: 'Canada', label: 'Canada', flag: '🇨🇦' },
+    { id: 'United States', label: 'USA', flag: '🇺🇸' },
+    { id: 'South Korea', label: 'South Korea', flag: '🇰🇷' },
+    { id: 'Brazil', label: 'Brazil', flag: '🇧🇷' },
+    { id: 'Netherlands', label: 'Netherlands', flag: '🇳🇱' },
+    { id: 'New Zealand', label: 'New Zealand', flag: '🇳🇿' },
+    { id: 'Iceland', label: 'Iceland', flag: '🇮🇸' },
+    { id: 'Portugal', label: 'Portugal', flag: '🇵🇹' },
+  ];
+
   const categories = [
-    { id: 'all', label: 'All' },
+    { id: 'all', label: 'All Categories' },
     { id: 'Landmark', label: 'Landmarks' },
     { id: 'Culture & Museum', label: 'Museums' },
     { id: 'Nature & Park', label: 'Nature' },
@@ -120,26 +155,42 @@ export const ExplorePage: React.FC<ExplorePageProps> = ({
     { id: 'Varanasi', label: 'Varanasi, Uttar Pradesh' },
     { id: 'Goa', label: 'Goa, India' },
     { id: 'Hyderabad', label: 'Hyderabad, Telangana' },
+    // Switzerland
+    { id: 'Zermatt', label: 'Zermatt (Matterhorn), Switzerland' },
+    { id: 'Interlaken', label: 'Interlaken (Jungfrau), Switzerland' },
+    { id: 'Lucerne', label: 'Lucerne, Switzerland' },
+    { id: 'Zurich', label: 'Zurich, Switzerland' },
     // Premier Global Capitals
     { id: 'Paris', label: 'Paris, France' },
     { id: 'Tokyo', label: 'Tokyo, Japan' },
+    { id: 'Kyoto', label: 'Kyoto, Japan' },
     { id: 'Rome', label: 'Rome, Italy' },
+    { id: 'Amalfi', label: 'Amalfi Coast, Italy' },
     { id: 'Barcelona', label: 'Barcelona, Spain' },
     { id: 'London', label: 'London, UK' },
+    { id: 'Edinburgh', label: 'Edinburgh, UK' },
     { id: 'New York', label: 'New York, USA' },
+    { id: 'San Francisco', label: 'San Francisco, USA' },
     { id: 'Berlin', label: 'Berlin, Germany' },
+    { id: 'Schwangau', label: 'Schwangau (Neuschwanstein), Germany' },
     { id: 'Singapore', label: 'Singapore' },
     { id: 'Dubai', label: 'Dubai, UAE' },
+    { id: 'Abu Dhabi', label: 'Abu Dhabi, UAE' },
+    { id: 'Athens', label: 'Athens, Greece' },
+    { id: 'Santorini', label: 'Santorini, Greece' },
+    { id: 'Cairo', label: 'Cairo (Pyramids), Egypt' },
+    { id: 'Luxor', label: 'Luxor, Egypt' },
+    { id: 'Bangkok', label: 'Bangkok, Thailand' },
+    { id: 'Phuket', label: 'Phuket, Thailand' },
+    { id: 'Istanbul', label: 'Istanbul, Turkey' },
+    { id: 'Göreme', label: 'Cappadocia, Turkey' },
+    { id: 'Bali', label: 'Bali (Ubud & Uluwatu), Indonesia' },
     { id: 'Sydney', label: 'Sydney, Australia' },
-    { id: 'Cairo', label: 'Cairo, Egypt' },
+    { id: 'Banff', label: 'Banff (Lake Louise), Canada' },
+    { id: 'Seoul', label: 'Seoul, South Korea' },
     { id: 'Amsterdam', label: 'Amsterdam, Netherlands' },
     { id: 'Prague', label: 'Prague, Czechia' },
-    { id: 'Seoul', label: 'Seoul, South Korea' },
-    { id: 'San Francisco', label: 'San Francisco, USA' },
     { id: 'Rio de Janeiro', label: 'Rio de Janeiro, Brazil' },
-    { id: 'Kyoto', label: 'Kyoto, Japan' },
-    { id: 'Amalfi', label: 'Amalfi Coast, Italy' },
-    { id: 'Santorini', label: 'Santorini, Greece' },
   ];
 
   return (
@@ -240,6 +291,20 @@ export const ExplorePage: React.FC<ExplorePageProps> = ({
             <span>Reset</span>
           </button>
         )}
+      </div>
+
+      {/* Country Realm Selector Strip */}
+      <div className="country-realms-strip flex items-center gap-2 overflow-x-auto pb-2 mb-3 scrollbar-none">
+        {countries.map(c => (
+          <button
+            key={c.id}
+            onClick={() => { setCountry(c.id); setPage(1); }}
+            className={`country-realm-btn ${country === c.id ? 'active' : ''}`}
+          >
+            <span className="text-sm select-none">{c.flag}</span>
+            <span>{c.label}</span>
+          </button>
+        ))}
       </div>
 
       {/* Category Pills Strip */}
@@ -366,6 +431,9 @@ export const ExplorePage: React.FC<ExplorePageProps> = ({
           display: flex;
           padding: 4px;
           gap: 4px;
+          background: #050e1f;
+          border-radius: 10px;
+          border: 1px solid rgba(56, 189, 248, 0.3);
         }
         .view-toggle-btn {
           display: flex;
@@ -373,25 +441,31 @@ export const ExplorePage: React.FC<ExplorePageProps> = ({
           gap: 6px;
           padding: 6px 12px;
           border-radius: 8px;
-          font-size: 0.82rem;
-          font-weight: 600;
-          color: var(--text-muted);
+          font-size: 0.85rem;
+          font-weight: 700;
+          color: #cbd5e1;
           transition: all var(--transition-fast);
         }
         .view-toggle-btn:hover {
           color: #ffffff;
+          background: rgba(56, 189, 248, 0.15);
         }
         .view-toggle-btn.active {
-          background: rgba(56, 189, 248, 0.15);
-          color: var(--accent-sky);
+          background: #0284c7;
+          color: #ffffff;
+          font-weight: 800;
         }
         .explore-filters-bar {
           display: flex;
           align-items: center;
           gap: 12px;
-          padding: 12px 16px;
-          margin-bottom: 16px;
+          padding: 16px 20px;
+          margin-bottom: 20px;
           flex-wrap: wrap;
+          background: #07152e !important;
+          border: 1.5px solid rgba(56, 189, 248, 0.4) !important;
+          border-radius: 16px;
+          box-shadow: 0 10px 30px rgba(0, 0, 0, 0.6) !important;
         }
         .filter-search-box {
           flex: 2;
@@ -399,18 +473,22 @@ export const ExplorePage: React.FC<ExplorePageProps> = ({
           display: flex;
           align-items: center;
           gap: 8px;
-          background: rgba(10, 15, 29, 0.6);
-          border: 1px solid var(--border-glass);
-          border-radius: 8px;
-          padding: 8px 12px;
+          background: #030a17;
+          border: 1.5px solid rgba(56, 189, 248, 0.4);
+          border-radius: 10px;
+          padding: 10px 14px;
         }
         .filter-search-input {
           width: 100%;
           background: transparent;
           border: none;
           color: #ffffff;
-          font-size: 0.9rem;
+          font-size: 0.95rem;
+          font-weight: 700;
           outline: none;
+        }
+        .filter-search-input::placeholder {
+          color: #93c5fd;
         }
         .filter-select-wrap {
           position: relative;
@@ -421,41 +499,46 @@ export const ExplorePage: React.FC<ExplorePageProps> = ({
         }
         .select-icon {
           position: absolute;
-          left: 10px;
+          left: 12px;
+          color: #38bdf8;
           pointer-events: none;
         }
         .filter-select {
           width: 100%;
-          background: rgba(10, 15, 29, 0.6);
-          border: 1px solid var(--border-glass);
-          border-radius: 8px;
-          padding: 8px 12px 8px 30px;
+          background: #030a17;
+          border: 1.5px solid rgba(56, 189, 248, 0.4);
+          border-radius: 10px;
+          padding: 10px 12px 10px 34px;
           color: #ffffff;
-          font-size: 0.85rem;
+          font-size: 0.88rem;
+          font-weight: 700;
           cursor: pointer;
         }
         .filter-select:focus {
           outline: none;
-          border-color: var(--accent-sky);
+          border-color: #38bdf8;
+          box-shadow: 0 0 14px rgba(56, 189, 248, 0.4);
         }
         .filter-select option {
-          background: #0f172a;
+          background: #07152e;
           color: #ffffff;
+          font-weight: 700;
         }
         .clear-filters-btn {
           display: flex;
           align-items: center;
           gap: 6px;
-          padding: 8px 14px;
-          border-radius: 8px;
-          background: rgba(244, 63, 94, 0.1);
-          border: 1px solid rgba(244, 63, 94, 0.25);
-          color: var(--accent-rose);
-          font-size: 0.82rem;
-          font-weight: 600;
+          padding: 10px 16px;
+          border-radius: 10px;
+          background: rgba(244, 63, 94, 0.18);
+          border: 1.5px solid #fb7185;
+          color: #fda4af;
+          font-size: 0.84rem;
+          font-weight: 800;
         }
         .clear-filters-btn:hover {
-          background: rgba(244, 63, 94, 0.2);
+          background: rgba(244, 63, 94, 0.3);
+          color: #ffffff;
         }
         .category-pills-strip {
           display: flex;
@@ -464,34 +547,71 @@ export const ExplorePage: React.FC<ExplorePageProps> = ({
           padding-bottom: 8px;
           margin-bottom: 16px;
         }
+        .country-realms-strip {
+          display: flex;
+          gap: 7px;
+          overflow-x: auto;
+          padding-bottom: 6px;
+          margin-bottom: 14px;
+        }
+        .country-realm-btn {
+          display: inline-flex;
+          align-items: center;
+          gap: 6px;
+          padding: 7px 14px;
+          border-radius: 9999px;
+          font-size: 0.82rem;
+          font-weight: 800;
+          color: #ffffff;
+          background: #091a38;
+          border: 1.5px solid rgba(56, 189, 248, 0.35);
+          white-space: nowrap;
+          cursor: pointer;
+          transition: all 0.2s ease;
+          box-shadow: 0 2px 8px rgba(0, 0, 0, 0.4);
+        }
+        .country-realm-btn:hover {
+          color: #ffffff;
+          background: #0284c7;
+          border-color: #38bdf8;
+        }
+        .country-realm-btn.active {
+          background: linear-gradient(135deg, #0284c7 0%, #2563eb 100%);
+          border-color: #fde047;
+          color: #ffffff;
+          box-shadow: 0 0 16px rgba(56, 189, 248, 0.6);
+        }
         .cat-pill-btn {
-          padding: 6px 14px;
+          padding: 8px 16px;
           border-radius: 20px;
-          font-size: 0.8rem;
-          font-weight: 600;
-          color: var(--text-secondary);
-          background: rgba(255, 255, 255, 0.04);
-          border: 1px solid var(--border-subtle);
+          font-size: 0.84rem;
+          font-weight: 800;
+          color: #ffffff;
+          background: #091a38;
+          border: 1.5px solid rgba(56, 189, 248, 0.35);
           white-space: nowrap;
           transition: all var(--transition-fast);
+          box-shadow: 0 2px 8px rgba(0, 0, 0, 0.4);
         }
         .cat-pill-btn:hover {
           color: #ffffff;
-          background: rgba(255, 255, 255, 0.08);
+          background: #0284c7;
+          border-color: #38bdf8;
         }
         .cat-pill-btn.active {
-          background: rgba(56, 189, 248, 0.15);
-          border-color: var(--accent-sky);
-          color: var(--accent-sky);
-          box-shadow: 0 0 10px rgba(56, 189, 248, 0.2);
+          background: linear-gradient(135deg, #0284c7 0%, #2563eb 100%);
+          border-color: #fde047;
+          color: #ffffff;
+          box-shadow: 0 0 14px rgba(56, 189, 248, 0.6);
         }
         .results-status-bar {
           display: flex;
           align-items: center;
           justify-content: space-between;
           margin-bottom: 20px;
-          font-size: 0.85rem;
-          color: var(--text-muted);
+          font-size: 0.92rem;
+          color: #cbd5e1;
+          font-weight: 600;
         }
         .results-count strong {
           color: #ffffff;
