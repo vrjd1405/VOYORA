@@ -1,6 +1,8 @@
 import express, { Request, Response, NextFunction } from 'express';
 import cors from 'cors';
 import dotenv from 'dotenv';
+import path from 'path';
+import fs from 'fs';
 import { db, testDbConnection } from './db/prisma.js';
 import destinationsRouter from './routes/destinations.js';
 import itineraryRouter from './routes/itinerary.js';
@@ -104,7 +106,20 @@ app.use('/api/favorites', favoritesRouter);
 app.use('/api/weather', weatherRouter);
 app.use('/api/planner', plannerRouter);
 
-// 404 handler
+// Serve static frontend assets if built
+const clientDistPath = fs.existsSync(path.resolve(process.cwd(), '../client/dist'))
+  ? path.resolve(process.cwd(), '../client/dist')
+  : path.resolve(process.cwd(), 'client/dist');
+
+if (fs.existsSync(clientDistPath)) {
+  app.use(express.static(clientDistPath));
+  app.get('*', (req: Request, res: Response, next: NextFunction) => {
+    if (req.path.startsWith('/api/')) return next();
+    res.sendFile(path.join(clientDistPath, 'index.html'));
+  });
+}
+
+// 404 handler for API routes
 app.use((_req: Request, res: Response) => {
   res.status(404).json({
     success: false,
