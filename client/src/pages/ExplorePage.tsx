@@ -102,10 +102,21 @@ export const ExplorePage: React.FC<ExplorePageProps> = ({
     { id: 'Tokyo', label: 'Tokyo, Japan' },
     { id: 'Rome', label: 'Rome, Italy' },
     { id: 'Barcelona', label: 'Barcelona, Spain' },
+    { id: 'London', label: 'London, UK' },
+    { id: 'New York', label: 'New York, USA' },
+    { id: 'Berlin', label: 'Berlin, Germany' },
+    { id: 'Singapore', label: 'Singapore' },
+    { id: 'Dubai', label: 'Dubai, UAE' },
+    { id: 'Sydney', label: 'Sydney, Australia' },
+    { id: 'Cairo', label: 'Cairo, Egypt' },
+    { id: 'Mumbai', label: 'Mumbai, India' },
+    { id: 'Amsterdam', label: 'Amsterdam, Netherlands' },
+    { id: 'Prague', label: 'Prague, Czechia' },
+    { id: 'Seoul', label: 'Seoul, South Korea' },
+    { id: 'San Francisco', label: 'San Francisco, USA' },
+    { id: 'Rio de Janeiro', label: 'Rio de Janeiro, Brazil' },
     { id: 'Kyoto', label: 'Kyoto, Japan' },
     { id: 'Amalfi', label: 'Amalfi Coast, Italy' },
-    { id: 'New York', label: 'New York, USA' },
-    { id: 'London', label: 'London, UK' },
     { id: 'Santorini', label: 'Santorini, Greece' },
   ];
 
@@ -117,7 +128,7 @@ export const ExplorePage: React.FC<ExplorePageProps> = ({
           <span className="section-badge">Live Discovery Engine</span>
           <h1 className="text-3xl font-extrabold text-white">Explore Global Destinations</h1>
           <p className="text-sm text-slate-400 mt-1">
-            Discover verified architectural wonders, nature sanctuaries, and cultural relics with live coordinates.
+            Discover verified architectural wonders, nature sanctuaries, and cultural relics across any city worldwide.
           </p>
         </div>
 
@@ -159,7 +170,7 @@ export const ExplorePage: React.FC<ExplorePageProps> = ({
             type="text"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            placeholder="Filter destinations or keywords..."
+            placeholder="Search any global city or landmark (e.g., Berlin, Mumbai, Cairo, Vancouver)..."
             className="filter-search-input"
           />
           {searchQuery && (

@@ -1,5 +1,5 @@
 import { Destination } from '../types/index.js';
-import { VERIFIED_DESTINATIONS } from './placesService.js';
+import { VERIFIED_DESTINATIONS, DYNAMIC_DESTINATIONS_CACHE } from './placesService.js';
 
 export interface PlanRequest {
   city: string;
@@ -38,14 +38,15 @@ export function generateSmartPlan(req: PlanRequest): GeneratedPlan {
   if (pace === 'relaxed') itemsPerDay = 2;
   if (pace === 'fast-paced') itemsPerDay = 4;
 
-  // Filter candidates by city
-  let candidates = VERIFIED_DESTINATIONS.filter(d => 
+  // Filter candidates by city from curated + discovered pool
+  const allKnown = [...VERIFIED_DESTINATIONS, ...Array.from(DYNAMIC_DESTINATIONS_CACHE.values())];
+  let candidates = allKnown.filter(d => 
     city === 'all' || city === '' || d.city.toLowerCase().includes(city) || d.country.toLowerCase().includes(city)
   );
 
   // If specific city has fewer items than needed, supplement with top global icons
   if (candidates.length < daysCount * itemsPerDay) {
-    const others = VERIFIED_DESTINATIONS.filter(d => !candidates.some(c => c.id === d.id));
+    const others = allKnown.filter(d => !candidates.some(c => c.id === d.id));
     candidates = [...candidates, ...others];
   }
 

@@ -26,7 +26,21 @@ export const SmartPlannerPage: React.FC<SmartPlannerPageProps> = ({ onNavigate }
   const { refreshTrip } = useTrip();
   const toast = useToast();
 
-  const presetCities = ['Paris', 'Tokyo', 'Rome', 'Barcelona', 'Kyoto', 'New York', 'Global Highlights'];
+  const presetCities = [
+    'Paris',
+    'Tokyo',
+    'Rome',
+    'Barcelona',
+    'Berlin',
+    'Singapore',
+    'Dubai',
+    'Sydney',
+    'Cairo',
+    'Mumbai',
+    'London',
+    'New York',
+    'Global Highlights',
+  ];
 
   const interestOptions = [
     'Architecture & Icons',

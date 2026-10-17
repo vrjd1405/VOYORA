@@ -65,7 +65,7 @@ export async function fetchWeatherForCoordinates(lat: number, lng: number): Prom
     return cached.data;
   }
 
-  const url = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lng}&current_weather=true&daily=weathercode,temperature_2m_max,temperature_2m_min&timezone=auto`;
+  const url = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lng}&current=temperature_2m,relative_humidity_2m,apparent_temperature,weather_code,wind_speed_10m&daily=temperature_2m_max,temperature_2m_min,precipitation_probability_max&timezone=auto`;
 
   const controller = new AbortController();
   const timeoutId = setTimeout(() => controller.abort(), 6000);
@@ -78,27 +78,36 @@ export async function fetchWeatherForCoordinates(lat: number, lng: number): Prom
       throw new Error(`Open-Meteo returned status ${res.status}`);
     }
 
-    const data = await res.json();
-    const condition = getWeatherConditionText(data.current_weather.weathercode);
+    const data = (await res.json()) as any;
+    const current = data.current || data.current_weather || {};
+    const weathercode = current.weather_code !== undefined ? current.weather_code : (current.weathercode || 0);
+    const condition = getWeatherConditionText(weathercode);
+
+    const rawTemp = current.temperature_2m !== undefined ? current.temperature_2m : (current.temperature || 0);
+    const rawApparent = current.apparent_temperature !== undefined ? current.apparent_temperature : undefined;
+    const rawHumidity = current.relative_humidity_2m !== undefined ? current.relative_humidity_2m : undefined;
 
     const result: WeatherData = {
       latitude: data.latitude,
       longitude: data.longitude,
       timezone: data.timezone || "UTC",
       current: {
-        temperature: Math.round(data.current_weather.temperature * 10) / 10,
-        weathercode: data.current_weather.weathercode,
-        windspeed: data.current_weather.windspeed,
-        winddirection: data.current_weather.winddirection,
-        isDay: data.current_weather.is_day,
-        time: data.current_weather.time,
+        temperature: Math.round(rawTemp * 10) / 10,
+        apparentTemperature: rawApparent !== undefined ? Math.round(rawApparent * 10) / 10 : undefined,
+        relativeHumidity: rawHumidity !== undefined ? Math.round(rawHumidity) : undefined,
+        weathercode,
+        windspeed: current.wind_speed_10m !== undefined ? current.wind_speed_10m : (current.windspeed || 0),
+        winddirection: current.wind_direction_10m !== undefined ? current.wind_direction_10m : (current.winddirection || 0),
+        isDay: current.is_day !== undefined ? current.is_day : 1,
+        time: current.time || new Date().toISOString(),
         conditionText: condition,
       },
       daily: {
         time: data.daily?.time || [],
-        weathercode: data.daily?.weathercode || [],
+        weathercode: data.daily?.weather_code || data.daily?.weathercode || [],
         temperature_2m_max: data.daily?.temperature_2m_max || [],
         temperature_2m_min: data.daily?.temperature_2m_min || [],
+        precipitation_probability_max: data.daily?.precipitation_probability_max || [],
       },
     };
 

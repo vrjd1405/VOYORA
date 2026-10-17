@@ -102,7 +102,7 @@ export const db = {
 
     async findUnique(args: { where: { id?: string; destinationId_dayNumber?: { destinationId: string; dayNumber: number } } }) {
       if (usePrisma && prismaInstance) {
-        return prismaInstance.itineraryItem.findUnique(args);
+        return (prismaInstance.itineraryItem as any).findUnique(args);
       }
       const data = readLocalDb();
       if (args.where.id) {

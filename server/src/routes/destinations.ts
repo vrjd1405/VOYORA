@@ -47,10 +47,10 @@ router.get('/featured', (_req: Request, res: Response) => {
 });
 
 // GET /api/destinations/:id - Single destination details
-router.get('/:id', (req: Request, res: Response) => {
+router.get('/:id', async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
-    const dest = getDestinationById(id);
+    const dest = await getDestinationById(id);
 
     if (!dest) {
       return res.status(404).json({

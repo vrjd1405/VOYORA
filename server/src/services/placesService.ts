@@ -353,8 +353,434 @@ export const VERIFIED_DESTINATIONS: Destination[] = [
     openingHours: "08:30 - 23:00 daily",
     website: "https://www.burjkhalifa.ae",
     tags: ["skyscraper", "skyline", "record-breaking", "luxury", "fountain"]
+  },
+  {
+    id: "dest_berlin_brandenburg",
+    name: "Brandenburg Gate",
+    category: "Landmark",
+    city: "Berlin",
+    country: "Germany",
+    lat: 52.5163,
+    lng: 13.3777,
+    imageUrl: "https://images.unsplash.com/photo-1560969184-10fe8719e047?auto=format&fit=crop&w=1200&q=85",
+    rating: 4.8,
+    address: "Pariser Platz, 10117 Berlin, Germany",
+    description: "An 18th-century neoclassical monument restored as an iconic symbol of European unity and peace. Commissioned by King Frederick William II, crowned by the majestic bronze Quadriga.",
+    openingHours: "Open 24 hours daily",
+    website: "https://www.berlin.de/en/attractions/brandenburg-gate",
+    tags: ["monument", "historic", "neoclassical", "unity", "pariser-platz"]
+  },
+  {
+    id: "dest_berlin_museum_island",
+    name: "Museum Island & Berlin Cathedral",
+    category: "Culture & Museum",
+    city: "Berlin",
+    country: "Germany",
+    lat: 52.5169,
+    lng: 13.4010,
+    imageUrl: "https://images.unsplash.com/photo-1587330979470-3595ac045ab0?auto=format&fit=crop&w=1200&q=85",
+    rating: 4.8,
+    address: "Am Lustgarten, 10178 Berlin, Germany",
+    description: "A UNESCO World Heritage sanctuary in the heart of the Spree River housing five internationally celebrated museums alongside the monumental dome of the Berlin Cathedral.",
+    openingHours: "10:00 - 18:00 (closed Mondays)",
+    website: "https://www.smb.museum",
+    tags: ["unesco", "museums", "cathedral", "antiquities", "spree"]
+  },
+  {
+    id: "dest_singapore_gardens_bay",
+    name: "Gardens by the Bay",
+    category: "Nature & Park",
+    city: "Singapore",
+    country: "Singapore",
+    lat: 1.2816,
+    lng: 103.8636,
+    imageUrl: "https://images.unsplash.com/photo-1525625293386-3f8f99389edd?auto=format&fit=crop&w=1200&q=85",
+    rating: 4.9,
+    address: "18 Marina Gardens Dr, Singapore 018953",
+    description: "An awe-inspiring 250-acre horticultural oasis showcasing towering Supertrees, the cloud-shrouded 35m indoor waterfall of the Cloud Forest, and the climate-controlled Flower Dome.",
+    openingHours: "05:00 - 02:00 daily (Conservatories 09:00 - 21:00)",
+    website: "https://www.gardensbythebay.com.sg",
+    tags: ["supertrees", "biodome", "waterfall", "futuristic", "botanical"]
+  },
+  {
+    id: "dest_singapore_marina_sands",
+    name: "Marina Bay Sands SkyPark",
+    category: "Landmark",
+    city: "Singapore",
+    country: "Singapore",
+    lat: 1.2834,
+    lng: 103.8607,
+    imageUrl: "https://images.unsplash.com/photo-1506351421178-63b52a2d2562?auto=format&fit=crop&w=1200&q=85",
+    rating: 4.8,
+    address: "10 Bayfront Ave, Singapore 018956",
+    description: "The world's largest public cantilevered platform perched 200 meters in the clouds across three towers, offering breathtaking 360-degree vistas across Singapore Strait and Marina Bay.",
+    openingHours: "11:00 - 21:00 daily",
+    website: "https://www.marinabaysands.com",
+    tags: ["skyline", "observation", "luxury", "iconic", "cantilever"]
+  },
+  {
+    id: "dest_sydney_opera_house",
+    name: "Sydney Opera House",
+    category: "Culture & Museum",
+    city: "Sydney",
+    country: "Australia",
+    lat: -33.8568,
+    lng: 151.2153,
+    imageUrl: "https://images.unsplash.com/photo-1506973035872-a4ec16b8e8d9?auto=format&fit=crop&w=1200&q=85",
+    rating: 4.8,
+    address: "Bennelong Point, Sydney NSW 2000, Australia",
+    description: "Jørn Utzon's 20th-century architectural masterpiece with its signature sail-like concrete shells overlooking Sydney Harbour. A UNESCO World Heritage cultural performing arts titan.",
+    openingHours: "09:00 - 20:30 daily",
+    website: "https://www.sydneyoperahouse.com",
+    tags: ["unesco", "harbour", "architecture", "performing-arts", "australia"]
+  },
+  {
+    id: "dest_sydney_bondi_beach",
+    name: "Bondi Beach & Coastal Walk",
+    category: "Coastal & Beach",
+    city: "Sydney",
+    country: "Australia",
+    lat: -33.8915,
+    lng: 151.2767,
+    imageUrl: "https://images.unsplash.com/photo-1507699622108-4be3abd695ad?auto=format&fit=crop&w=1200&q=85",
+    rating: 4.7,
+    address: "Queen Elizabeth Dr, Bondi Beach NSW 2026, Australia",
+    description: "Australia's most iconic crescent of golden sand and rolling Pacific surf, seamlessly connected to the dramatic 6km clifftop coastal walk from Bondi to Coogee.",
+    openingHours: "Open 24 hours daily",
+    website: "https://www.waverley.nsw.gov.au/recreation/beaches/bondi_beach",
+    tags: ["surf", "golden-sand", "coastal-walk", "ocean", "pacific"]
+  },
+  {
+    id: "dest_cairo_pyramids",
+    name: "Great Pyramids of Giza & Sphinx",
+    category: "Historic",
+    city: "Cairo",
+    country: "Egypt",
+    lat: 29.9792,
+    lng: 31.1342,
+    imageUrl: "https://images.unsplash.com/photo-1503177119275-0aa32b3a9368?auto=format&fit=crop&w=1200&q=85",
+    rating: 4.9,
+    address: "Al Haram, Giza Governorate 3512201, Egypt",
+    description: "The sole surviving wonder of the ancient world. Erected over 4,500 years ago during Egypt's Old Kingdom, guarded eternally by the enigmatic limestone Great Sphinx.",
+    openingHours: "08:00 - 17:00 daily",
+    website: "https://egymonuments.gov.eg",
+    tags: ["ancient-wonder", "pharaohs", "desert", "pyramids", "sphinx"]
+  },
+  {
+    id: "dest_mumbai_gateway_india",
+    name: "Gateway of India",
+    category: "Historic",
+    city: "Mumbai",
+    country: "India",
+    lat: 18.9220,
+    lng: 72.8347,
+    imageUrl: "https://images.unsplash.com/photo-1570168007204-dfb528c6958f?auto=format&fit=crop&w=1200&q=85",
+    rating: 4.7,
+    address: "Apollo Bandar, Colaba, Mumbai, Maharashtra 400001, India",
+    description: "An imposing 26m Indo-Saracenic basalt arch built to commemorate the 1911 royal visit of King George V, standing majestically on the Mumbai harbour waterfront.",
+    openingHours: "Open 24 hours daily",
+    website: "https://mumbaicity.gov.in",
+    tags: ["monument", "waterfront", "historic", "indo-saracenic", "colaba"]
+  },
+  {
+    id: "dest_mumbai_marine_drive",
+    name: "Marine Drive Promenade",
+    category: "Landmark",
+    city: "Mumbai",
+    country: "India",
+    lat: 18.9432,
+    lng: 72.8234,
+    imageUrl: "https://images.unsplash.com/photo-1567157577867-05ccb1388e66?auto=format&fit=crop&w=1200&q=85",
+    rating: 4.8,
+    address: "Netaji Subhash Chandra Bose Rd, Mumbai 400020, India",
+    description: "The Queen's Necklace: a sweeping 3.6km C-shaped boulevard skirting the Arabian Sea, flanked by one of the world's largest collections of Art Deco architecture.",
+    openingHours: "Open 24 hours daily",
+    website: "https://mumbaicity.gov.in",
+    tags: ["promenade", "arabian-sea", "art-deco", "sunset", "queens-necklace"]
+  },
+  {
+    id: "dest_amsterdam_rijksmuseum",
+    name: "Rijksmuseum",
+    category: "Culture & Museum",
+    city: "Amsterdam",
+    country: "Netherlands",
+    lat: 52.3600,
+    lng: 4.8852,
+    imageUrl: "https://images.unsplash.com/photo-1583037189850-1921ae7c6c22?auto=format&fit=crop&w=1200&q=85",
+    rating: 4.8,
+    address: "Museumstraat 1, 1071 XX Amsterdam, Netherlands",
+    description: "The national museum of the Netherlands dedicated to Dutch arts and history. Marvel at Rembrandt's The Night Watch, Vermeer's The Milkmaid, and 8,000 historic treasures.",
+    openingHours: "09:00 - 17:00 daily",
+    website: "https://www.rijksmuseum.nl",
+    tags: ["rembrandt", "vermeer", "dutch-masters", "museumplein", "fine-art"]
+  },
+  {
+    id: "dest_prague_charles_bridge",
+    name: "Charles Bridge",
+    category: "Historic",
+    city: "Prague",
+    country: "Czech Republic",
+    lat: 50.0865,
+    lng: 14.4114,
+    imageUrl: "https://images.unsplash.com/photo-1519671482749-fd09be7ccebf?auto=format&fit=crop&w=1200&q=85",
+    rating: 4.8,
+    address: "Karlův most, 110 00 Praha 1, Czechia",
+    description: "A legendary 14th-century Gothic stone bridge spanning the Vltava River. Adorned with 30 Baroque statues of saints and flanked by fortified towers connecting Old Town to Malá Strana.",
+    openingHours: "Open 24 hours daily",
+    website: "https://www.prague.eu",
+    tags: ["gothic", "vltava", "baroque-statues", "historic", "fairytale"]
+  },
+  {
+    id: "dest_seoul_gyeongbokgung",
+    name: "Gyeongbokgung Palace",
+    category: "Historic",
+    city: "Seoul",
+    country: "South Korea",
+    lat: 37.5796,
+    lng: 126.9770,
+    imageUrl: "https://images.unsplash.com/photo-1538669715315-1558eb8d5721?auto=format&fit=crop&w=1200&q=85",
+    rating: 4.8,
+    address: "161 Sajik-ro, Jongno-gu, Seoul, South Korea",
+    description: "The primary royal palace of the Joseon dynasty, originally built in 1395. Features the majestic Gwanghwamun Gate, Geunjeongjeon throne hall, and authentic Royal Guard Changing ceremonies.",
+    openingHours: "09:00 - 18:00 (closed Tuesdays)",
+    website: "https://www.royalpalace.go.kr",
+    tags: ["palace", "joseon", "royal-guard", "hanbok", "architecture"]
+  },
+  {
+    id: "dest_sf_golden_gate",
+    name: "Golden Gate Bridge & Vista Point",
+    category: "Landmark",
+    city: "San Francisco",
+    country: "United States",
+    lat: 37.8199,
+    lng: -122.4783,
+    imageUrl: "https://images.unsplash.com/photo-1501594907352-04cda38ebc29?auto=format&fit=crop&w=1200&q=85",
+    rating: 4.8,
+    address: "Golden Gate Bridge, San Francisco, CA 94129, USA",
+    description: "The world-famous suspension bridge spanning the Golden Gate Strait in its signature International Orange hue. Marvel at views from Marin Headlands and Battery Spencer.",
+    openingHours: "Open 24 hours daily (pedestrian walkways daytime)",
+    website: "https://www.goldengate.org",
+    tags: ["suspension-bridge", "pacific", "fog", "engineering", "vista"]
+  },
+  {
+    id: "dest_rio_christ_redeemer",
+    name: "Christ the Redeemer",
+    category: "Landmark",
+    city: "Rio de Janeiro",
+    country: "Brazil",
+    lat: -22.9519,
+    lng: -43.2105,
+    imageUrl: "https://images.unsplash.com/photo-1516306580123-e6e52b1b7b5f?auto=format&fit=crop&w=1200&q=85",
+    rating: 4.9,
+    address: "Parque Nacional da Tijuca, Rio de Janeiro - RJ, Brazil",
+    description: "A colossal 30-meter Art Deco statue of Jesus Christ atop the 700-meter Corcovado mountain in Tijuca National Park. One of the New Seven Wonders of the World.",
+    openingHours: "08:00 - 19:00 daily",
+    website: "https://cristoredentoroficial.com.br",
+    tags: ["art-deco", "corcovado", "seven-wonders", "panorama", "tijuca"]
   }
 ];
+
+// In-memory cache for on-the-fly discovered places across any global city
+export const DYNAMIC_DESTINATIONS_CACHE = new Map<string, Destination>();
+
+/**
+ * Fetch genuine travel photography from Unsplash API
+ */
+async function fetchUnsplashPhoto(term: string): Promise<string | null> {
+  const accessKey = process.env.UNSPLASH_ACCESS_KEY || '48ZSI9ByxmEthvD07aLYRSdBSEsDmxMU2-PGWvLYoik';
+  if (!accessKey) return null;
+  try {
+    const url = `https://api.unsplash.com/search/photos?query=${encodeURIComponent(term)}&client_id=${accessKey}&orientation=landscape&per_page=1`;
+    const res = await fetch(url);
+    if (res.ok) {
+      const data = (await res.json()) as any;
+      if (data.results && data.results.length > 0) {
+        return data.results[0].urls?.regular || data.results[0].urls?.full || null;
+      }
+    }
+  } catch (err) {
+    console.warn('Unsplash photo fetch error:', err);
+  }
+  return null;
+}
+
+/**
+ * Live Geoapify Places & Geocoding integration with Unsplash high-res photography
+ */
+async function fetchFromGeoapify(query: string, preferredCategory?: string): Promise<Destination[]> {
+  const geoapifyKey = process.env.GEOAPIFY_API_KEY || '715d707e4ce3492c8ac0a46675cdace9';
+  if (!geoapifyKey) return [];
+
+  try {
+    const geoUrl = `https://api.geoapify.com/v1/geocode/search?text=${encodeURIComponent(query)}&apiKey=${geoapifyKey}&limit=5`;
+    const geoRes = await fetch(geoUrl);
+    if (!geoRes.ok) return [];
+    const geoData = (await geoRes.json()) as any;
+    if (!geoData.features || geoData.features.length === 0) return [];
+
+    const results: Destination[] = [];
+
+    for (const f of geoData.features) {
+      const p = f.properties;
+      const rawName = p.name || (p.formatted ? p.formatted.split(',')[0].trim() : query);
+      const cityName = p.city || p.county || p.state || 'Global';
+      const countryName = p.country || 'Destination';
+      const placeId = `geo_${p.place_id || p.osm_id || Math.random().toString(36).slice(2, 8)}`;
+
+      if (DYNAMIC_DESTINATIONS_CACHE.has(placeId)) {
+        results.push(DYNAMIC_DESTINATIONS_CACHE.get(placeId)!);
+        continue;
+      }
+
+      // Infer category
+      let category = preferredCategory || 'Landmark';
+      const cat = (p.category || '').toLowerCase();
+      if (cat.includes('museum') || cat.includes('entertainment.culture')) {
+        category = 'Culture & Museum';
+      } else if (cat.includes('natural') || cat.includes('leisure.park')) {
+        category = 'Nature & Park';
+      } else if (cat.includes('beach')) {
+        category = 'Coastal & Beach';
+      } else if (cat.includes('historic') || cat.includes('heritage')) {
+        category = 'Historic';
+      }
+
+      // Fetch authentic photography: Unsplash -> Wikipedia -> Curated fallback
+      let imageUrl = await fetchUnsplashPhoto(`${rawName} ${cityName}`);
+      let description = `${rawName} is a verified location in ${cityName}, ${countryName}. Verified with live Geoapify cartography.`;
+
+      try {
+        const wikiRes = await fetch(`https://en.wikipedia.org/api/rest_v1/page/summary/${encodeURIComponent(rawName)}`);
+        if (wikiRes.ok) {
+          const wikiData = (await wikiRes.json()) as any;
+          if (wikiData.extract) description = wikiData.extract;
+          if (!imageUrl && wikiData.originalimage?.source) {
+            imageUrl = wikiData.originalimage.source;
+          }
+        }
+      } catch {}
+
+      if (!imageUrl) {
+        imageUrl = 'https://images.unsplash.com/photo-1488646953014-85cb44e25828?auto=format&fit=crop&w=1200&q=85';
+      }
+
+      const dest: Destination = {
+        id: placeId,
+        name: rawName,
+        category,
+        city: cityName,
+        country: countryName,
+        lat: f.geometry.coordinates[1],
+        lng: f.geometry.coordinates[0],
+        imageUrl,
+        rating: 4.8,
+        address: p.formatted,
+        description,
+        tags: [cityName.toLowerCase(), countryName.toLowerCase(), category.toLowerCase(), 'geoapify-verified']
+      };
+
+      DYNAMIC_DESTINATIONS_CACHE.set(placeId, dest);
+      results.push(dest);
+    }
+
+    return results;
+  } catch (err) {
+    console.warn('Geoapify search error:', err);
+    return [];
+  }
+}
+
+/**
+ * Live fallback: Query OpenStreetMap Nominatim for exact real-world coordinates and address,
+ * paired with Wikipedia REST API for genuine encyclopedic summaries and high-res photos.
+ */
+async function fetchFromOSMAndWiki(searchQuery: string, preferredCategory?: string): Promise<Destination[]> {
+  try {
+    const nomUrl = `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(searchQuery)}&format=json&addressdetails=1&limit=6`;
+    const nomRes = await fetch(nomUrl, {
+      headers: { 'User-Agent': 'VoyoraTravelPlanner/1.0 (info@voyora.travel)' },
+    });
+    if (!nomRes.ok) return [];
+    const places = (await nomRes.json()) as any;
+    if (!Array.isArray(places) || places.length === 0) return [];
+
+    const results: Destination[] = [];
+
+    for (const p of places) {
+      const placeId = `osm_${p.osm_id || p.place_id}`;
+      if (DYNAMIC_DESTINATIONS_CACHE.has(placeId)) {
+        results.push(DYNAMIC_DESTINATIONS_CACHE.get(placeId)!);
+        continue;
+      }
+
+      const rawName = p.name || (p.display_name ? p.display_name.split(',')[0].trim() : searchQuery);
+      const cityName = p.address?.city || p.address?.town || p.address?.municipality || p.address?.state || 'Global';
+      const countryName = p.address?.country || 'Destination';
+
+      // Infer category
+      let category = preferredCategory || 'Landmark';
+      const type = (p.type || '').toLowerCase();
+      const pClass = (p.class || '').toLowerCase();
+      if (type.includes('museum') || pClass.includes('arts') || type.includes('theatre') || type.includes('gallery')) {
+        category = 'Culture & Museum';
+      } else if (type.includes('park') || type.includes('garden') || type.includes('nature') || type.includes('viewpoint') || type.includes('wood')) {
+        category = 'Nature & Park';
+      } else if (type.includes('beach') || type.includes('coast') || type.includes('bay') || type.includes('sea')) {
+        category = 'Coastal & Beach';
+      } else if (type.includes('castle') || type.includes('monument') || type.includes('ruins') || type.includes('historic') || type.includes('temple') || type.includes('church')) {
+        category = 'Historic';
+      }
+
+      // Fetch authentic photography and summary: Unsplash -> Wikipedia
+      let imageUrl = await fetchUnsplashPhoto(`${rawName} ${cityName}`);
+      let description = `${rawName} is a verified location in ${cityName}, ${countryName}. Discovered via OpenStreetMap geographic cartography.`;
+
+      try {
+        const wikiRes = await fetch(`https://en.wikipedia.org/api/rest_v1/page/summary/${encodeURIComponent(rawName)}`);
+        if (wikiRes.ok) {
+          const wikiData = (await wikiRes.json()) as any;
+          if (wikiData.extract) {
+            description = wikiData.extract;
+          }
+          if (!imageUrl && wikiData.originalimage?.source) {
+            imageUrl = wikiData.originalimage.source;
+          } else if (!imageUrl && wikiData.thumbnail?.source) {
+            imageUrl = wikiData.thumbnail.source.replace(/\/\d+px-/, '/1200px-');
+          }
+        }
+      } catch {
+        // graceful fallback
+      }
+
+      if (!imageUrl) {
+        imageUrl = 'https://images.unsplash.com/photo-1488646953014-85cb44e25828?auto=format&fit=crop&w=1200&q=85';
+      }
+
+      const dest: Destination = {
+        id: placeId,
+        name: rawName,
+        category,
+        city: cityName,
+        country: countryName,
+        lat: parseFloat(p.lat),
+        lng: parseFloat(p.lon),
+        imageUrl,
+        rating: 4.7,
+        address: p.display_name,
+        description,
+        tags: [cityName.toLowerCase(), countryName.toLowerCase(), category.toLowerCase(), 'verified-osm', 'live-discovery']
+      };
+
+      DYNAMIC_DESTINATIONS_CACHE.set(placeId, dest);
+      results.push(dest);
+    }
+
+    return results;
+  } catch (err) {
+    console.warn('OSM / Wiki search encountered error:', err);
+    return [];
+  }
+}
 
 export async function searchPlaces(params: {
   q?: string;
@@ -370,45 +796,9 @@ export async function searchPlaces(params: {
   const categoryFilter = (params.category || '').trim();
   const cityFilter = (params.city || '').trim().toLowerCase();
 
-  // Try live Geoapify API if API key is provided
-  const geoapifyKey = process.env.GEOAPIFY_API_KEY;
-  if (geoapifyKey && query) {
-    try {
-      const geoUrl = `https://api.geoapify.com/v1/geocode/search?text=${encodeURIComponent(query)}&apiKey=${geoapifyKey}&limit=10`;
-      const geoRes = await fetch(geoUrl);
-      if (geoRes.ok) {
-        const geoData = await geoRes.json();
-        if (geoData.features && geoData.features.length > 0) {
-          const liveResults: Destination[] = geoData.features.map((f: any, idx: number) => ({
-            id: `geo_${f.properties.place_id || idx}`,
-            name: f.properties.name || f.properties.formatted || query,
-            category: f.properties.category || 'Sight',
-            city: f.properties.city || f.properties.county || f.properties.state || 'Global',
-            country: f.properties.country || 'Destination',
-            lat: f.geometry.coordinates[1],
-            lng: f.geometry.coordinates[0],
-            imageUrl: "https://images.unsplash.com/photo-1488646953014-85cb44e25828?auto=format&fit=crop&w=1200&q=85",
-            address: f.properties.formatted,
-            rating: 4.6,
-            description: `A notable location discovered in ${f.properties.city || f.properties.country || 'the region'}.`,
-            tags: ["discovered", "live-api"]
-          }));
-
-          return {
-            destinations: liveResults,
-            total: liveResults.length,
-            page: 1,
-            totalPages: 1
-          };
-        }
-      }
-    } catch (err) {
-      console.warn('Geoapify search failed, falling back to verified dataset:', err);
-    }
-  }
-
-  // Filter verified curated dataset
-  let filtered = [...VERIFIED_DESTINATIONS];
+  // Combine verified curated dataset and any previously cached dynamic places
+  const allKnown = [...VERIFIED_DESTINATIONS, ...Array.from(DYNAMIC_DESTINATIONS_CACHE.values())];
+  let filtered = [...allKnown];
 
   if (query) {
     filtered = filtered.filter(d => 
@@ -427,6 +817,43 @@ export async function searchPlaces(params: {
 
   if (categoryFilter && categoryFilter !== 'all') {
     filtered = filtered.filter(d => d.category.toLowerCase() === categoryFilter.toLowerCase());
+  }
+
+  // If query returned fewer than 2 results, perform live discovery using Geoapify + Unsplash + Wikipedia
+  if (query && filtered.length < 2) {
+    const geoDiscovered = await fetchFromGeoapify(query, categoryFilter);
+    if (geoDiscovered.length > 0) {
+      for (const item of geoDiscovered) {
+        if (!filtered.some(f => f.id === item.id)) {
+          filtered.push(item);
+        }
+      }
+    } else {
+      // Fallback to OpenStreetMap Nominatim
+      const osmDiscovered = await fetchFromOSMAndWiki(query, categoryFilter);
+      for (const item of osmDiscovered) {
+        if (!filtered.some(f => f.id === item.id)) {
+          filtered.push(item);
+        }
+      }
+    }
+  } else if (cityFilter && cityFilter !== 'all' && filtered.length < 2) {
+    // If specific city selected has no places yet, discover places in that city
+    const geoDiscovered = await fetchFromGeoapify(`${cityFilter} tourism`, categoryFilter);
+    if (geoDiscovered.length > 0) {
+      for (const item of geoDiscovered) {
+        if (!filtered.some(f => f.id === item.id)) {
+          filtered.push(item);
+        }
+      }
+    } else {
+      const osmDiscovered = await fetchFromOSMAndWiki(`${cityFilter} tourism`, categoryFilter);
+      for (const item of osmDiscovered) {
+        if (!filtered.some(f => f.id === item.id)) {
+          filtered.push(item);
+        }
+      }
+    }
   }
 
   // Sorting
@@ -453,7 +880,102 @@ export async function searchPlaces(params: {
   };
 }
 
-export function getDestinationById(id: string): Destination | null {
+export async function getDestinationById(id: string): Promise<Destination | null> {
   const dest = VERIFIED_DESTINATIONS.find(d => d.id === id);
-  return dest || null;
+  if (dest) return dest;
+
+  if (DYNAMIC_DESTINATIONS_CACHE.has(id)) {
+    return DYNAMIC_DESTINATIONS_CACHE.get(id)!;
+  }
+
+  // Dynamic recovery for OSM IDs if not in cache
+  if (id.startsWith('osm_')) {
+    const rawId = id.replace('osm_', '');
+    try {
+      const nomUrl = `https://nominatim.openstreetmap.org/lookup?osm_ids=W${rawId},N${rawId},R${rawId}&format=json&addressdetails=1`;
+      const nomRes = await fetch(nomUrl, {
+        headers: { 'User-Agent': 'VoyoraTravelPlanner/1.0 (info@voyora.travel)' },
+      });
+      if (nomRes.ok) {
+        const places = (await nomRes.json()) as any;
+        if (Array.isArray(places) && places.length > 0) {
+          const p = places[0];
+          const rawName = p.name || (p.display_name ? p.display_name.split(',')[0].trim() : 'Landmark');
+          const cityName = p.address?.city || p.address?.town || p.address?.state || 'Global';
+          const countryName = p.address?.country || 'Destination';
+
+          let description = `${rawName} in ${cityName}, ${countryName}.`;
+          let imageUrl = 'https://images.unsplash.com/photo-1488646953014-85cb44e25828?auto=format&fit=crop&w=1200&q=85';
+          try {
+            const wikiRes = await fetch(`https://en.wikipedia.org/api/rest_v1/page/summary/${encodeURIComponent(rawName)}`);
+            if (wikiRes.ok) {
+              const wiki = (await wikiRes.json()) as any;
+              if (wiki.extract) description = wiki.extract;
+              if (wiki.originalimage?.source) imageUrl = wiki.originalimage.source;
+            }
+          } catch {}
+
+          const restoredDest: Destination = {
+            id,
+            name: rawName,
+            category: 'Landmark',
+            city: cityName,
+            country: countryName,
+            lat: parseFloat(p.lat),
+            lng: parseFloat(p.lon),
+            imageUrl,
+            rating: 4.7,
+            address: p.display_name,
+            description,
+            tags: [cityName.toLowerCase(), 'verified-osm']
+          };
+          DYNAMIC_DESTINATIONS_CACHE.set(id, restoredDest);
+          return restoredDest;
+        }
+      }
+    } catch {}
+  }
+
+  // Dynamic recovery for Geoapify IDs if not in cache
+  if (id.startsWith('geo_')) {
+    const rawId = id.replace('geo_', '');
+    const geoapifyKey = process.env.GEOAPIFY_API_KEY || '715d707e4ce3492c8ac0a46675cdace9';
+    if (geoapifyKey) {
+      try {
+        const placeRes = await fetch(`https://api.geoapify.com/v2/place-details?id=${encodeURIComponent(rawId)}&apiKey=${geoapifyKey}`);
+        if (placeRes.ok) {
+          const placeData = (await placeRes.json()) as any;
+          const p = placeData.features?.[0]?.properties;
+          if (p) {
+            const rawName = p.name || p.formatted?.split(',')[0] || 'Destination';
+            const cityName = p.city || p.county || p.state || 'Global';
+            const countryName = p.country || 'Destination';
+            const [lng, lat] = placeData.features[0].geometry.coordinates;
+
+            let imageUrl = await fetchUnsplashPhoto(`${rawName} ${cityName}`);
+            if (!imageUrl) imageUrl = 'https://images.unsplash.com/photo-1488646953014-85cb44e25828?auto=format&fit=crop&w=1200&q=85';
+
+            const restoredDest: Destination = {
+              id,
+              name: rawName,
+              category: 'Landmark',
+              city: cityName,
+              country: countryName,
+              lat,
+              lng,
+              imageUrl,
+              rating: 4.8,
+              address: p.formatted,
+              description: `${rawName} is a verified location in ${cityName}, ${countryName}. Verified via Geoapify cartography.`,
+              tags: [cityName.toLowerCase(), 'geoapify-verified']
+            };
+            DYNAMIC_DESTINATIONS_CACHE.set(id, restoredDest);
+            return restoredDest;
+          }
+        }
+      } catch {}
+    }
+  }
+
+  return null;
 }

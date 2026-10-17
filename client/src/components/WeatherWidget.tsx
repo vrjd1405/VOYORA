@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Sun, Cloud, CloudRain, CloudSnow, CloudLightning, Wind, Compass, Thermometer } from 'lucide-react';
+import { Sun, Cloud, CloudRain, CloudSnow, CloudLightning, Wind, Compass, Thermometer, Droplets } from 'lucide-react';
 import { WeatherData } from '../types';
 import * as api from '../services/api';
 
@@ -126,6 +126,18 @@ export const WeatherWidget: React.FC<WeatherWidgetProps> = ({ lat, lng, cityName
           </div>
         </div>
         <div className="weather-metrics">
+          {weather.current.apparentTemperature !== undefined && (
+            <div className="metric-item">
+              <Thermometer size={14} className="text-amber-400" />
+              <span>Feels {convertTemp(weather.current.apparentTemperature)}</span>
+            </div>
+          )}
+          {weather.current.relativeHumidity !== undefined && (
+            <div className="metric-item">
+              <Droplets size={14} className="text-blue-400" />
+              <span>{weather.current.relativeHumidity}% Humidity</span>
+            </div>
+          )}
           <div className="metric-item">
             <Wind size={14} className="text-sky-400" />
             <span>{weather.current.windspeed} km/h Wind</span>
@@ -148,6 +160,7 @@ export const WeatherWidget: React.FC<WeatherWidgetProps> = ({ lat, lng, cityName
               const code = weather.daily.weathercode[idx] || 0;
               const maxT = weather.daily.temperature_2m_max[idx] || 0;
               const minT = weather.daily.temperature_2m_min[idx] || 0;
+              const precip = weather.daily.precipitation_probability_max?.[idx];
 
               return (
                 <div key={dateStr} className="forecast-day-card">
@@ -159,6 +172,12 @@ export const WeatherWidget: React.FC<WeatherWidgetProps> = ({ lat, lng, cityName
                     <span className="forecast-max">{convertTemp(maxT)}</span>
                     <span className="forecast-min">{convertTemp(minT)}</span>
                   </div>
+                  {precip !== undefined && precip > 0 && (
+                    <span className="text-[10px] text-sky-400 mt-1 flex items-center justify-center gap-0.5">
+                      <Droplets size={9} />
+                      {precip}%
+                    </span>
+                  )}
                 </div>
               );
             })}

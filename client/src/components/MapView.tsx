@@ -35,11 +35,21 @@ export const MapView: React.FC<MapViewProps> = ({
 
       L.control.zoom({ position: 'topright' }).addTo(map);
 
-      // CartoDB Dark Matter Tiles
-      L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
-        attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> &copy; <a href="https://carto.com/attributions">CARTO</a>',
-        subdomains: 'abcd',
+      // Luxury MapTiler Cloud Dark Tiles with CartoDB fallback
+      const maptilerKey = (import.meta as any).env?.VITE_MAPTILER_API_KEY || '0DCejl9s9v3Lhj62YAQ0';
+      const tileUrl = maptilerKey
+        ? `https://api.maptiler.com/maps/streets-v2-dark/{z}/{x}/{y}.png?key=${maptilerKey}`
+        : 'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png';
+
+      const attribution = maptilerKey
+        ? '&copy; <a href="https://www.maptiler.com/copyright/" target="_blank">MapTiler</a> &copy; <a href="https://www.openstreetmap.org/copyright" target="_blank">OpenStreetMap</a>'
+        : '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> &copy; <a href="https://carto.com/attributions">CARTO</a>';
+
+      L.tileLayer(tileUrl, {
+        attribution,
         maxZoom: 19,
+        tileSize: maptilerKey ? 512 : 256,
+        zoomOffset: maptilerKey ? -1 : 0,
       }).addTo(map);
 
       mapInstanceRef.current = map;
