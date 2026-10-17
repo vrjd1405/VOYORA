@@ -10,10 +10,11 @@ const GeneratePlanSchema = z.object({
   days: z.number().int().min(1).max(7).default(3),
   interests: z.array(z.string()).default([]),
   pace: z.enum(['relaxed', 'balanced', 'fast-paced']).default('balanced'),
+  geminiApiKey: z.string().optional(),
 });
 
-// POST /api/planner/generate - Generate rule-based smart itinerary
-router.post('/generate', (req: Request, res: Response) => {
+// POST /api/planner/generate - Generate smart itinerary with dual engine
+router.post('/generate', async (req: Request, res: Response) => {
   try {
     const parsed = GeneratePlanSchema.safeParse(req.body);
     if (!parsed.success) {
@@ -24,11 +25,11 @@ router.post('/generate', (req: Request, res: Response) => {
       });
     }
 
-    const plan = generateSmartPlan(parsed.data as PlanRequest);
+    const plan = await generateSmartPlan(parsed.data as PlanRequest);
 
     return res.json({
       success: true,
-      message: `Generated custom ${plan.daysCount}-day itinerary for ${plan.city}.`,
+      message: `Generated custom ${plan.daysCount}-day itinerary for ${plan.city} via ${plan.aiEngine}.`,
       data: plan,
     });
   } catch (err: any) {

@@ -195,6 +195,7 @@ export async function generateSmartPlan(payload: {
   days: number;
   interests: string[];
   pace: string;
+  geminiApiKey?: string;
 }): Promise<SmartPlanResponse> {
   const res = await fetch(`${API_BASE}/planner/generate`, {
     method: 'POST',

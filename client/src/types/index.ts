@@ -84,20 +84,53 @@ export interface WeatherData {
   };
 }
 
+export interface DiningHighlight {
+  dish: string;
+  description: string;
+  bestTime: string;
+}
+
+export interface SmartPlanItem {
+  destination: Destination;
+  timeSlot: 'Morning' | 'Afternoon' | 'Evening';
+  suggestionNote: string;
+  estimatedHours?: number;
+  transitFromPrevKm?: number;
+  transitTimeMin?: number;
+}
+
+export interface SmartDayPlan {
+  dayNumber: number;
+  title: string;
+  theme: string;
+  insiderTip?: string;
+  totalTransitKm?: number;
+  items: SmartPlanItem[];
+}
+
+export interface WeatherDaySummary {
+  date: string;
+  maxTemp: number;
+  minTemp: number;
+  conditionText: string;
+}
+
 export interface SmartPlanResponse {
   city: string;
   daysCount: number;
   pace: string;
   interests: string[];
-  days: Array<{
-    dayNumber: number;
-    title: string;
-    theme: string;
-    items: Array<{
-      destination: Destination;
-      timeSlot: 'Morning' | 'Afternoon' | 'Evening';
-      suggestionNote: string;
-    }>;
-  }>;
+  days: SmartDayPlan[];
   totalPlaces: number;
+  aiEngine: string;
+  summary?: string;
+  culturalEtiquette?: string[];
+  diningHighlights?: DiningHighlight[];
+  weatherForecast?: {
+    currentTemp: number;
+    conditionText: string;
+    apparentTemp?: number;
+    windspeed?: number;
+    forecastDays: WeatherDaySummary[];
+  };
 }
