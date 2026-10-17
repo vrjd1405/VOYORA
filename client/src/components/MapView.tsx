@@ -1,4 +1,4 @@
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import L from 'leaflet';
 import { Destination } from '../types';
 
@@ -10,6 +10,8 @@ interface MapViewProps {
   className?: string;
 }
 
+const DEFAULT_CARTO_KEY = 'cb1_4n8s_1_a1c7df4ae1771dece93e26df';
+
 export const MapView: React.FC<MapViewProps> = ({
   destinations,
   selectedDestination,
@@ -20,8 +22,10 @@ export const MapView: React.FC<MapViewProps> = ({
   const mapContainerRef = useRef<HTMLDivElement>(null);
   const mapInstanceRef = useRef<L.Map | null>(null);
   const markersRef = useRef<Map<string, L.Marker>>(new Map());
+  const tileLayersRef = useRef<L.Layer[]>([]);
+  const [mapStyle, setMapStyle] = useState<'dark' | 'voyager' | 'satellite'>('dark');
 
-  // Initialize Map
+  // Initialize Map Instance
   useEffect(() => {
     if (!mapContainerRef.current) return;
 
@@ -35,23 +39,6 @@ export const MapView: React.FC<MapViewProps> = ({
 
       L.control.zoom({ position: 'topright' }).addTo(map);
 
-      // Luxury MapTiler Cloud Dark Tiles with CartoDB fallback
-      const maptilerKey = (import.meta as any).env?.VITE_MAPTILER_API_KEY || '';
-      const tileUrl = maptilerKey
-        ? `https://api.maptiler.com/maps/streets-v2-dark/{z}/{x}/{y}.png?key=${maptilerKey}`
-        : 'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png';
-
-      const attribution = maptilerKey
-        ? '&copy; <a href="https://www.maptiler.com/copyright/" target="_blank">MapTiler</a> &copy; <a href="https://www.openstreetmap.org/copyright" target="_blank">OpenStreetMap</a>'
-        : '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> &copy; <a href="https://carto.com/attributions">CARTO</a>';
-
-      L.tileLayer(tileUrl, {
-        attribution,
-        maxZoom: 19,
-        tileSize: maptilerKey ? 512 : 256,
-        zoomOffset: maptilerKey ? -1 : 0,
-      }).addTo(map);
-
       mapInstanceRef.current = map;
     }
 
@@ -63,6 +50,65 @@ export const MapView: React.FC<MapViewProps> = ({
       }
     };
   }, []);
+
+  // Update Basemap Tiles based on mapStyle
+  useEffect(() => {
+    const map = mapInstanceRef.current;
+    if (!map) return;
+
+    // Remove existing tile layers
+    tileLayersRef.current.forEach(layer => layer.remove());
+    tileLayersRef.current = [];
+
+    const cartoKey = (import.meta as any).env?.VITE_CARTO_API_KEY || DEFAULT_CARTO_KEY;
+
+    if (mapStyle === 'dark') {
+      // Authenticated CARTO Dark Matter (Zero watermarks, high-res dark luxury)
+      const darkLayer = L.tileLayer(
+        `https://{s}.basemaps.cartocdn.com/rastertiles/dark_all/{z}/{x}/{y}{r}.png?key=${cartoKey}`,
+        {
+          attribution: '&copy; <a href="https://www.openstreetmap.org/copyright" target="_blank">OpenStreetMap</a> &copy; <a href="https://carto.com/attributions" target="_blank">CARTO</a>',
+          subdomains: 'abcd',
+          maxZoom: 20,
+        }
+      ).addTo(map);
+
+      tileLayersRef.current = [darkLayer];
+    } else if (mapStyle === 'voyager') {
+      // Authenticated CARTO Voyager (Clean luxury travel cartography)
+      const voyagerLayer = L.tileLayer(
+        `https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png?key=${cartoKey}`,
+        {
+          attribution: '&copy; <a href="https://www.openstreetmap.org/copyright" target="_blank">OpenStreetMap</a> &copy; <a href="https://carto.com/attributions" target="_blank">CARTO</a>',
+          subdomains: 'abcd',
+          maxZoom: 20,
+        }
+      ).addTo(map);
+
+      tileLayersRef.current = [voyagerLayer];
+    } else {
+      // ESRI World Photorealistic Satellite Imagery with Reference Labels
+      const satLayer = L.tileLayer(
+        'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',
+        {
+          attribution: '&copy; Esri, Maxar, Earthstar Geographics',
+          maxNativeZoom: 18,
+          maxZoom: 20,
+        }
+      ).addTo(map);
+
+      const refLayer = L.tileLayer(
+        'https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Dark_Gray_Reference/MapServer/tile/{z}/{y}/{x}',
+        {
+          attribution: '',
+          maxNativeZoom: 16,
+          maxZoom: 20,
+        }
+      ).addTo(map);
+
+      tileLayersRef.current = [satLayer, refLayer];
+    }
+  }, [mapStyle]);
 
   // Update Markers when destinations change
   useEffect(() => {
@@ -166,6 +212,34 @@ export const MapView: React.FC<MapViewProps> = ({
 
   return (
     <div className={`map-view-container ${className}`}>
+      {/* Floating Basemap Style Switcher */}
+      <div className="map-style-switcher" role="group" aria-label="Map view style">
+        <button
+          type="button"
+          className={`style-btn ${mapStyle === 'dark' ? 'active' : ''}`}
+          onClick={() => setMapStyle('dark')}
+          title="CARTO Dark Matter"
+        >
+          Dark
+        </button>
+        <button
+          type="button"
+          className={`style-btn ${mapStyle === 'voyager' ? 'active' : ''}`}
+          onClick={() => setMapStyle('voyager')}
+          title="CARTO Voyager Travel"
+        >
+          Voyager
+        </button>
+        <button
+          type="button"
+          className={`style-btn ${mapStyle === 'satellite' ? 'active' : ''}`}
+          onClick={() => setMapStyle('satellite')}
+          title="Satellite Imagery"
+        >
+          Satellite
+        </button>
+      </div>
+
       <div ref={mapContainerRef} className="map-canvas" />
 
       <style>{`
@@ -181,6 +255,42 @@ export const MapView: React.FC<MapViewProps> = ({
         .map-canvas {
           width: 100%;
           height: 100%;
+        }
+        .map-style-switcher {
+          position: absolute;
+          top: 14px;
+          left: 14px;
+          z-index: 1000;
+          display: flex;
+          align-items: center;
+          gap: 4px;
+          padding: 4px;
+          background: rgba(10, 15, 29, 0.85);
+          backdrop-filter: blur(12px);
+          -webkit-backdrop-filter: blur(12px);
+          border: 1px solid rgba(255, 255, 255, 0.12);
+          border-radius: 20px;
+          box-shadow: 0 4px 16px rgba(0, 0, 0, 0.4);
+        }
+        .style-btn {
+          background: transparent;
+          border: none;
+          color: #94a3b8;
+          font-family: var(--font-body, inherit);
+          font-size: 0.75rem;
+          font-weight: 600;
+          padding: 4px 12px;
+          border-radius: 14px;
+          cursor: pointer;
+          transition: all 0.2s ease;
+        }
+        .style-btn:hover {
+          color: #ffffff;
+        }
+        .style-btn.active {
+          background: linear-gradient(135deg, #0284c7, #6366f1);
+          color: #ffffff;
+          box-shadow: 0 2px 8px rgba(2, 132, 199, 0.4);
         }
         .custom-voyora-marker {
           position: relative;
