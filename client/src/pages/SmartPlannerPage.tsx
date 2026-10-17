@@ -110,6 +110,13 @@ export const SmartPlannerPage: React.FC<SmartPlannerPageProps> = ({ onNavigate }
     );
   };
 
+  const handleCityChange = (newCity: string) => {
+    setCity(newCity);
+    if (generatedPlan && generatedPlan.city.toLowerCase() !== newCity.trim().toLowerCase()) {
+      setGeneratedPlan(null);
+    }
+  };
+
   const handleGenerate = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!city.trim()) {
@@ -286,7 +293,7 @@ export const SmartPlannerPage: React.FC<SmartPlannerPageProps> = ({ onNavigate }
                           <button
                             type="button"
                             key={c}
-                            onClick={() => setCity(c)}
+                            onClick={() => handleCityChange(c)}
                             className={`city-preset-btn ${isActive ? 'active' : ''}`}
                           >
                             {c}
@@ -304,7 +311,7 @@ export const SmartPlannerPage: React.FC<SmartPlannerPageProps> = ({ onNavigate }
                 <input
                   type="text"
                   value={city}
-                  onChange={e => setCity(e.target.value)}
+                  onChange={e => handleCityChange(e.target.value)}
                   placeholder="Or type any global city (e.g. Zurich, Lucerne, Cairo, Kyoto, Salem)..."
                   required
                   className="config-input"
@@ -426,8 +433,9 @@ export const SmartPlannerPage: React.FC<SmartPlannerPageProps> = ({ onNavigate }
                       <CheckCircle2 size={12} />
                       <span>Itinerary Synthesized</span>
                     </span>
-                    <span className="badge-luxury">
-                      Voyora Intelligence
+                    <span className="badge-luxury flex items-center gap-1.5">
+                      <Zap size={11} className="text-amber-400" />
+                      <span>{generatedPlan.aiEngine || 'Voyora Intelligence'}</span>
                     </span>
                   </div>
                   <h3 className="plan-summary-title">

@@ -1,7 +1,7 @@
-import { GoogleGenAI } from '@google/genai';
+import { GoogleGenAI, Type } from '@google/genai';
 import { Destination } from '../types/index.js';
-import { VERIFIED_DESTINATIONS, DYNAMIC_DESTINATIONS_CACHE, matchesCity, searchPlaces } from './placesService.js';
 import { fetchWeatherForCoordinates, getWeatherConditionText } from './weatherService.js';
+import { discoverVerifiedAttractions, haversineDistanceKm, CityGeocodeResult } from './worldwideDiscovery.js';
 
 export interface PlanRequest {
   city: string;
@@ -62,19 +62,8 @@ export interface GeneratedPlan {
   };
 }
 
-function haversineDistanceKm(lat1: number, lon1: number, lat2: number, lon2: number): number {
-  const R = 6371; // Earth radius in km
-  const dLat = ((lat2 - lat1) * Math.PI) / 180;
-  const dLon = ((lon2 - lon1) * Math.PI) / 180;
-  const a =
-    Math.sin(dLat / 2) * Math.sin(dLat / 2) +
-    Math.cos((lat1 * Math.PI) / 180) *
-      Math.cos((lat2 * Math.PI) / 180) *
-      Math.sin(dLon / 2) *
-      Math.sin(dLon / 2);
-  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-  return Math.round(R * c * 10) / 10;
-}
+// 30-minute in-memory cache to save quotas and eliminate duplicate calls
+const PLAN_CACHE = new Map<string, { plan: GeneratedPlan; expiresAt: number }>();
 
 function getCuratedDining(city: string): DiningHighlight[] {
   const c = city.toLowerCase();
@@ -128,82 +117,22 @@ function getCuratedDining(city: string): DiningHighlight[] {
     ];
   }
 
-  if (c.includes('coimbatore')) {
+  if (c.includes('bengaluru') || c.includes('bangalore')) {
     return [
       {
-        dish: 'Annapoorna Ghee Sambar Vadai',
-        description: 'Crisp golden lentil fritter soaked to perfection in legendary cumin and coriander infused sambar.',
+        dish: 'Benne Dosa at Vidyarthi Bhavan',
+        description: 'Iconic butter-drenched golden dosa with a crispy exterior and fluffy interior, served with rich coconut chutney.',
         bestTime: 'Morning Breakfast',
       },
       {
-        dish: 'Kongunadu Pallipalayam Specialty',
-        description: 'Signature dry roast prepared with shallots, garlic, and whole dried red chilies in cold-pressed coconut oil.',
+        dish: 'Bisi Bele Bath',
+        description: 'Traditional spiced rice, lentil, and vegetable specialty served piping hot with ghee and crispy boondi.',
         bestTime: 'Lunch',
       },
       {
-        dish: 'Chilled Elaneer Payasam',
-        description: 'Refreshing dessert crafted from sweet tender coconut water, jelly pulp, and condensed milk.',
-        bestTime: 'Dessert',
-      },
-    ];
-  }
-
-  if (c.includes('thanjavur') || c.includes('tanjore')) {
-    return [
-      {
-        dish: 'Royal Thanjavur Banana Leaf Thali',
-        description: 'A bountiful royal feast featuring Thanjavur sambar, rasam, kootu, poriyal, appalam, and sweet payasam.',
-        bestTime: 'Midday Lunch',
-      },
-      {
-        dish: 'Kasi Halwa (Ash Gourd Sweet)',
-        description: 'Glistening sweet made from winter melon, simmered with pure ghee, saffron, and roasted cashews.',
-        bestTime: 'Traditional Sweet',
-      },
-      {
-        dish: 'Kumbakonam Degree Coffee',
-        description: 'Thick, creamy undiluted cow milk coffee with an unmistakable fragrance and rich velvety crema.',
-        bestTime: 'Morning / Evening',
-      },
-    ];
-  }
-
-  if (c.includes('kanyakumari')) {
-    return [
-      {
-        dish: 'Nanjil Coastal Fish Curry',
-        description: 'Fresh catch simmered in a tangy raw mango and coconut gravy, paired with Kerala red rice.',
-        bestTime: 'Lunch',
-      },
-      {
-        dish: 'Nendran Banana Crisps',
-        description: 'Crispy golden plantain chips thinly sliced and fried in pure coconut oil with a pinch of rock salt.',
-        bestTime: 'Evening Snack',
-      },
-      {
-        dish: 'Appam with Coconut Vegetable Stew',
-        description: 'Lacy fermented rice pancakes with a soft pillowy center, dunked in fragrant spiced coconut milk.',
-        bestTime: 'Breakfast',
-      },
-    ];
-  }
-
-  if (c.includes('ooty') || c.includes('kodaikanal') || c.includes('nilgiris')) {
-    return [
-      {
-        dish: 'Nilgiri Single-Estate High Grown Tea',
-        description: 'Crisp, floral high-altitude black tea freshly brewed with aromatic cardamom.',
-        bestTime: 'Morning Warmup',
-      },
-      {
-        dish: 'Ooty Baked Crispy Varkey',
-        description: 'Flaky layered pastry biscuit made in century-old wood-fired heritage ovens.',
-        bestTime: 'Tea Time',
-      },
-      {
-        dish: 'Artisanal Dark Chocolate & Fudge',
-        description: 'Handcrafted truffles and roasted almond fudge produced by local hill-station chocolatiers.',
-        bestTime: 'Sweet Treat',
+        dish: 'Mysore Pak from Sri Venkateshwara Sweetmeat',
+        description: 'Melt-in-mouth royal sweet made from pure ghee, gram flour, and cardamom.',
+        bestTime: 'Sweet Delight',
       },
     ];
   }
@@ -211,19 +140,19 @@ function getCuratedDining(city: string): DiningHighlight[] {
   if (c.includes('paris')) {
     return [
       {
-        dish: 'Warm Croissant au Beurre',
-        description: 'Buttery, golden, multi-layered flaky pastry freshly pulled from a local artisan boulangerie oven.',
-        bestTime: 'Breakfast',
+        dish: 'Artisan Butter Croissant & Cafe au Lait',
+        description: 'Flaky 100% butter croissant fresh from an artisanal boulangerie, enjoyed in a quiet Saint-Germain cafe.',
+        bestTime: 'Morning Breakfast',
       },
       {
-        dish: 'Duck Confit (Confit de Canard)',
-        description: 'Tender slow-cooked duck leg with crisp golden skin and garlic-thyme roasted sarladaise potatoes.',
-        bestTime: 'Bistro Dinner',
+        dish: 'Traditional Duck Confit (Confit de Canard)',
+        description: 'Slow-cooked crispy duck leg paired with garlic pomme sarladaise potatoes and red wine jus in Le Marais.',
+        bestTime: 'Dinner',
       },
       {
-        dish: 'Artisanal Parisian Macarons',
-        description: 'Delicate almond meringue shells filled with rich chocolate ganache, salted butter caramel, or raspberry.',
-        bestTime: 'Afternoon Tea',
+        dish: 'Warm Soupe a l’Oignon Gratinee',
+        description: 'Rich caramelized onion bouillon crowned with melted Gruyère cheese toast in a historic brasserie.',
+        bestTime: 'Lunch / Evening',
       },
     ];
   }
@@ -231,24 +160,43 @@ function getCuratedDining(city: string): DiningHighlight[] {
   if (c.includes('tokyo')) {
     return [
       {
-        dish: 'Tsukiji Outer Market Nigiri Sushi',
-        description: 'Pristine seasonal bluefin tuna, sea urchin, and salmon nigiri brushed with aged shoyu.',
-        bestTime: 'Morning / Lunch',
+        dish: 'Tsukiji Fresh Edomae Nigiri Sushi',
+        description: 'Pristine morning catch hand-pressed with seasoned warm sushi rice by master itamae chefs.',
+        bestTime: 'Early Lunch',
       },
       {
-        dish: 'Rich Tonkotsu Ramen',
-        description: 'Simmered 18-hour collagen-rich pork broth with firm springy noodles, soft-boiled ajitsuke egg, and chashu.',
+        dish: 'Authentic Tonkotsu or Shoyu Ramen',
+        description: 'Rich slow-simmered broth with springy noodles, soft-boiled ajitsuke tamago, and tender chashu pork.',
         bestTime: 'Dinner',
       },
       {
-        dish: 'Asakusa Fresh Baked Melonpan',
-        description: 'Warm fluffy sweet bread encased in a crisp cookie-crust exterior, best enjoyed fresh on Nakamise street.',
-        bestTime: 'Street Snack',
+        dish: 'Asakusa Sensoji Matcha Daifuku & Dango',
+        description: 'Sweet chewy mochi rice cake filled with sweetened azuki red bean paste along Nakamise-dori.',
+        bestTime: 'Afternoon Snack',
       },
     ];
   }
 
-  // Universal fallback for any other city
+  if (c.includes('london')) {
+    return [
+      {
+        dish: 'Traditional British Sunday Roast with Yorkshire Pudding',
+        description: 'Tender roasted beef or lamb with crispy roast potatoes, seasonal vegetables, and rich onion gravy.',
+        bestTime: 'Midday Sunday Lunch',
+      },
+      {
+        dish: 'Borough Market Artisan Salt Beef Bagel',
+        description: 'Warm carved cured brisket piled high with fiery English mustard and pickles in London’s premier gourmet market.',
+        bestTime: 'Lunch',
+      },
+      {
+        dish: 'Classic Afternoon High Tea',
+        description: 'Fine English black tea served with warm clotted cream scones, strawberry jam, and delicate finger sandwiches.',
+        bestTime: 'Afternoon (15:00 - 17:00)',
+      },
+    ];
+  }
+
   return [
     {
       dish: `Signature ${city} Regional Breakfast`,
@@ -270,7 +218,7 @@ function getCuratedDining(city: string): DiningHighlight[] {
 
 function getCuratedEtiquette(city: string): string[] {
   const c = city.toLowerCase();
-  if (c.includes('chennai') || c.includes('madurai') || c.includes('thanjavur') || c.includes('kanyakumari')) {
+  if (c.includes('chennai') || c.includes('madurai') || c.includes('bengaluru') || c.includes('thanjavur') || c.includes('kanyakumari')) {
     return [
       'Temple Protocol: Remove footwear before entering sanctums; modest attire covering shoulders and knees is traditional.',
       'Timing Wisdom: Visit majestic stone temples in early morning (06:30 - 09:30) or late afternoon to avoid hot courtyard granite.',
@@ -287,11 +235,19 @@ function getCuratedEtiquette(city: string): string[] {
     ];
   }
 
-  if (c.includes('tokyo')) {
+  if (c.includes('tokyo') || c.includes('kyoto')) {
     return [
       'Transit Manners: Keep cell phones on silent and refrain from speaking on phones while on trains and subways.',
       'Tipping Culture: Tipping is not customary in Japan and can be considered awkward; excellent service is standard.',
       'Footwear Courtesy: Prepare slip-on shoes; remove footwear when entering traditional restaurants, temples, and ryokans.',
+    ];
+  }
+
+  if (c.includes('london')) {
+    return [
+      'Escalator Courtesy: Always stand on the right and walk on the left on London Underground escalators.',
+      'Queue Etiquette: Queuing orderly is a sacrosanct British cultural norm at bus stops, cafes, and museums.',
+      'Pre-Booking: Top attractions like Westminster Abbey, Tower of London, and Sky Garden require advance online timeslots.',
     ];
   }
 
@@ -305,7 +261,10 @@ function getCuratedEtiquette(city: string): string[] {
 export async function generateSmartPlan(req: PlanRequest): Promise<GeneratedPlan> {
   const daysCount = Math.max(1, Math.min(7, req.days || 3));
   const rawCity = (req.city || '').trim();
-  const city = rawCity.toLowerCase();
+  if (!rawCity) {
+    throw new Error('Please specify a destination city.');
+  }
+
   const interests = req.interests || [];
   const pace = req.pace || 'balanced';
 
@@ -315,135 +274,30 @@ export async function generateSmartPlan(req: PlanRequest): Promise<GeneratedPlan
 
   const totalNeeded = daysCount * itemsPerDay;
 
-  // 1. Dynamic Live Discovery: Query verified database AND live Geoapify cartography
-  let candidates: Destination[] = [];
-
-  if (city === 'all' || city === '' || city === 'global highlights') {
-    const allKnown = [...VERIFIED_DESTINATIONS, ...Array.from(DYNAMIC_DESTINATIONS_CACHE.values())];
-    candidates = allKnown;
-  } else {
-    // Search destinations dynamically using Geoapify + verified pools
-    const searchRes = await searchPlaces({ city: rawCity, limit: 35 });
-    candidates = searchRes.destinations.filter(d => matchesCity(d.city, city, d.tags));
-
-    // If still empty or very few, supplement from cache strictly matching city
-    if (candidates.length < totalNeeded) {
-      const allKnown = [...VERIFIED_DESTINATIONS, ...Array.from(DYNAMIC_DESTINATIONS_CACHE.values())];
-      for (const d of allKnown) {
-        if (!candidates.some(c => c.id === d.id) && matchesCity(d.city, city, d.tags)) {
-          candidates.push(d);
-        }
-      }
-    }
+  // 1. Check TTL Cache
+  const cacheKey = `${rawCity.toLowerCase()}_${daysCount}_${pace}_${[...interests].sort().join(',')}`;
+  const cached = PLAN_CACHE.get(cacheKey);
+  if (cached && cached.expiresAt > Date.now()) {
+    return cached.plan;
   }
 
-  // 2. Strict City Isolation: Never inject random foreign cities (like Paris/Tokyo in Madurai)!
-  let selected: Destination[] = [];
-
-  if (candidates.length >= totalNeeded) {
-    // Score candidate destinations based on user interests
-    const scored = candidates.map(d => {
-      let score = d.rating || 4.5;
-      const textToMatch = `${d.category} ${d.tags?.join(' ') || ''} ${d.name} ${d.description || ''}`.toLowerCase();
-
-      interests.forEach(interest => {
-        const kw = interest.toLowerCase();
-        if (textToMatch.includes(kw) || kw.includes(d.category.toLowerCase())) {
-          score += 2.5;
-        }
-      });
-
-      return { destination: d, score };
-    });
-
-    scored.sort((a, b) => b.score - a.score);
-    selected = scored.slice(0, totalNeeded).map(s => s.destination);
-  } else if (candidates.length > 0) {
-    // Distribute the real candidates as main anchor visits
-    selected = [...candidates];
-
-    // If more slots are needed to fulfill the user's requested days,
-    // synthesize authentic local exploration experiences located in this EXACT city
-    // with its exact coordinates, instead of polluting with other cities!
-    const baseDest = candidates[0];
-    const cityCoordLat = baseDest.lat;
-    const cityCoordLng = baseDest.lng;
-    const countryName = baseDest.country;
-    const cityName = baseDest.city;
-
-    const synthesizedExp = [
-      {
-        name: `${cityName} Heritage Old Town & Artisan Quarter`,
-        cat: 'Culture & Museum',
-        desc: `Explore the vibrant traditional streets, ancient architecture, and heritage artisan workshops of ${cityName}.`,
-        dLat: 0.008,
-        dLng: 0.006,
-      },
-      {
-        name: `${cityName} Evening Promenade & Street Markets`,
-        cat: 'Landmark',
-        desc: `Experience the evening atmosphere, local aromatic delicacies, and bustling community spirit in ${cityName}.`,
-        dLat: -0.006,
-        dLng: 0.007,
-      },
-      {
-        name: `${cityName} Panoramic Sunset Viewpoint`,
-        cat: 'Nature & Park',
-        desc: `Capture golden hour views across the skyline and picturesque landscape of ${cityName}.`,
-        dLat: 0.012,
-        dLng: -0.008,
-      },
-      {
-        name: `${cityName} Traditional Silk & Spice Bazaar`,
-        cat: 'Culture & Museum',
-        desc: `Immerse in the sensory aromas of freshly ground spices, handloom fabrics, and local handcrafted souvenirs.`,
-        dLat: -0.009,
-        dLng: -0.005,
-      },
-      {
-        name: `${cityName} Morning Sacred Grounds & Serenity Stroll`,
-        cat: 'Historic',
-        desc: `Peaceful early morning stroll through heritage shrines and tranquil spiritual gardens in ${cityName}.`,
-        dLat: 0.005,
-        dLng: -0.009,
-      },
-      {
-        name: `${cityName} Culinary Discovery Walk`,
-        cat: 'Landmark',
-        desc: `Taste renowned local delicacies and traditional refreshments at authentic multi-generational food spots.`,
-        dLat: 0.003,
-        dLng: 0.004,
-      },
-    ];
-
-    let synthIdx = 0;
-    while (selected.length < totalNeeded) {
-      const template = synthesizedExp[synthIdx % synthesizedExp.length];
-      const newDest: Destination = {
-        id: `synth_${city}_${synthIdx}_${Date.now()}`,
-        name: template.name,
-        category: template.cat,
-        city: cityName,
-        country: countryName,
-        lat: cityCoordLat + template.dLat,
-        lng: cityCoordLng + template.dLng,
-        imageUrl: baseDest.imageUrl || 'https://images.unsplash.com/photo-1488646953014-85cb44e25828?auto=format&fit=crop&w=1200&q=85',
-        rating: 4.8,
-        address: `${template.name}, ${cityName}, ${countryName}`,
-        description: template.desc,
-        openingHours: '08:00 - 21:00 daily',
-        tags: [city, 'authentic-experience', template.cat.toLowerCase()],
-      };
-      selected.push(newDest);
-      synthIdx++;
-    }
-  } else {
-    // If city is completely unrecognized or 'all'
-    const allKnown = [...VERIFIED_DESTINATIONS, ...Array.from(DYNAMIC_DESTINATIONS_CACHE.values())];
-    selected = allKnown.slice(0, totalNeeded);
+  // 2. Worldwide Verified Discovery with STRICT City Isolation
+  const { cityInfo, attractions } = await discoverVerifiedAttractions(rawCity, totalNeeded);
+  if (!cityInfo || attractions.length === 0) {
+    throw new Error(`Could not verify any real-world attractions within "${rawCity}". Please check city spelling.`);
   }
 
-  // 3. Optional Google Gemini 2.5 Flash GenAI Integration
+  // Strict geographical validation: Re-confirm every attraction is within 35km of city center
+  const validAttractions = attractions.filter(a => {
+    const dist = haversineDistanceKm(cityInfo.lat, cityInfo.lng, a.lat, a.lng);
+    return dist <= 35;
+  });
+
+  if (validAttractions.length === 0) {
+    throw new Error(`No verified attractions found within 35 km radius of ${rawCity}.`);
+  }
+
+  // 3. Google Gemini 3.8 Flash Integration (Official Google GenAI SDK)
   const geminiKey = (req.geminiApiKey || process.env.GEMINI_API_KEY || '').trim();
   let aiEngine = 'Voyora Neural Spatial Engine (Verified Cartography)';
   let geminiData: any = null;
@@ -451,165 +305,198 @@ export async function generateSmartPlan(req: PlanRequest): Promise<GeneratedPlan
   if (geminiKey) {
     try {
       const ai = new GoogleGenAI({ apiKey: geminiKey });
-      const prompt = `You are a world-renowned cultural travel architect for VOYORA.
-Create an inspiring, highly realistic ${daysCount}-day itinerary for ${rawCity || 'Global Highlights'}.
-Cadence: ${pace} (${itemsPerDay} stops/day).
-Traveler Interests: ${interests.join(', ') || 'Culture, Architecture, Scenic Views'}.
+      const prompt = `You are VOYORA's Senior Luxury Travel Architect and Master Curator.
+Synthesize an inspiring, culturally immersive ${daysCount}-day itinerary for ${cityInfo.cityName}, ${cityInfo.countryName}.
+Pacing: ${pace} (${itemsPerDay} stops/day).
+Interests: ${interests.join(', ') || 'Cultural Heritage, Iconic Architecture, Nature & Scenic Views'}.
 
-Here are the verified real landmarks selected for this journey:
-${selected.map((d, i) => `${i + 1}. "${d.name}" (${d.category}, Address: ${d.address || d.city})`).join('\n')}
+STRICT GEOGRAPHIC INTEGRITY RULES:
+1. DESTINATION ISOLATION: The journey is STRICTLY in ${cityInfo.cityName}, ${cityInfo.countryName}. Never mention or assign locations outside this destination.
+2. VERIFIED ATTRACTIONS ONLY: You MUST select only from the verified attractions provided below. Never invent new attraction names.
+3. LOGICAL TIME SLOTS: Assign each attraction to an optimal time slot: Morning, Afternoon, or Evening.
+4. EVOCATIVE NOTES: Write actionable insider guidance for each stop (best vantage points, lighting, duration).
+5. LOCAL CULTURE: Provide 3-4 authentic regional dishes for ${cityInfo.cityName} and 3-4 respectful cultural etiquette guidelines.
 
-Format your response strictly as valid pure JSON with NO markdown backticks:
-{
-  "summary": "2-3 sentences inspiring executive summary capturing the cultural soul of ${rawCity}",
-  "culturalEtiquette": ["3 practical local travel tips/etiquette specifically for ${rawCity}"],
-  "diningHighlights": [
-    { "dish": "Dish name", "description": "Why it is iconic and where to taste it", "bestTime": "Morning / Lunch / Sunset / Dinner" }
-  ],
-  "days": [
-    {
-      "dayNumber": 1,
-      "title": "Inspiring Day Title",
-      "theme": "Evocative theme description",
-      "insiderTip": "Specific insider secret for this day",
-      "items": [
-        {
-          "destinationName": "Must closely match one of the verified landmarks above",
-          "timeSlot": "Morning" | "Afternoon" | "Evening",
-          "suggestionNote": "Detailed actionable advice (best photo angles, quiet hours, what to observe, duration)",
-          "estimatedHours": 2
-        }
-      ]
-    }
-  ]
-}`;
+Verified Real Attractions in ${cityInfo.cityName}:
+${validAttractions.map(a => `- ID: "${a.id}", Name: "${a.name}", Category: "${a.category}", Description: "${a.description?.slice(0, 140)}"`).join('\n')}`;
 
-      let aiResponse: any = null;
-      const candidateModels = ['gemini-3.8-flash', 'gemini-2.5-flash', 'gemini-2.0-flash'];
-      for (const mod of candidateModels) {
+      const schema = {
+        type: Type.OBJECT,
+        properties: {
+          summary: { type: Type.STRING },
+          culturalEtiquette: {
+            type: Type.ARRAY,
+            items: { type: Type.STRING },
+          },
+          diningHighlights: {
+            type: Type.ARRAY,
+            items: {
+              type: Type.OBJECT,
+              properties: {
+                dish: { type: Type.STRING },
+                description: { type: Type.STRING },
+                bestTime: { type: Type.STRING },
+              },
+              required: ['dish', 'description', 'bestTime'],
+            },
+          },
+          days: {
+            type: Type.ARRAY,
+            items: {
+              type: Type.OBJECT,
+              properties: {
+                dayNumber: { type: Type.INTEGER },
+                title: { type: Type.STRING },
+                theme: { type: Type.STRING },
+                insiderTip: { type: Type.STRING },
+                items: {
+                  type: Type.ARRAY,
+                  items: {
+                    type: Type.OBJECT,
+                    properties: {
+                      destinationId: { type: Type.STRING },
+                      timeSlot: { type: Type.STRING },
+                      suggestionNote: { type: Type.STRING },
+                      estimatedHours: { type: Type.NUMBER },
+                    },
+                    required: ['destinationId', 'timeSlot', 'suggestionNote'],
+                  },
+                },
+              },
+              required: ['dayNumber', 'title', 'theme', 'items'],
+            },
+          },
+        },
+        required: ['summary', 'culturalEtiquette', 'diningHighlights', 'days'],
+      };
+
+      const candidateModels = ['gemini-3.8-flash', 'gemini-3.5-flash-lite'];
+      for (const model of candidateModels) {
         try {
-          aiResponse = await ai.models.generateContent({
-            model: mod,
+          const aiRes = await ai.models.generateContent({
+            model,
             contents: prompt,
             config: {
               responseMimeType: 'application/json',
-              temperature: 0.3,
+              responseJsonSchema: schema,
             },
           });
-          aiEngine = `Google Gemini (${mod} GenAI Active)`;
-          break;
-        } catch (err: any) {
-          console.warn(`Model ${mod} attempt:`, err.message);
+          if (aiRes.text) {
+            geminiData = JSON.parse(aiRes.text);
+            aiEngine = `Google Gemini (${model} GenAI Active)`;
+            break;
+          }
+        } catch (modelErr: any) {
+          console.warn(`Model ${model} attempt error:`, modelErr.message);
         }
       }
-
-      if (aiResponse) {
-        const rawText = aiResponse.text || '{}';
-        geminiData = JSON.parse(rawText);
-      } else {
-        aiEngine = 'Voyora Neural Spatial Engine (Verified Cartography)';
-      }
     } catch (err: any) {
-      console.warn('Gemini AI generation encountered an issue, falling back to Voyora Neural Engine:', err.message);
-      aiEngine = 'Voyora Neural Spatial Engine (Deterministic Intelligence)';
+      console.warn('Gemini AI generation encountered an error, activating deterministic spatial engine:', err.message);
+      aiEngine = 'Voyora Neural Spatial Engine (Verified Cartography)';
     }
   }
 
   // 4. Weather Forecast Integration (via Open-Meteo)
   let weatherForecast: GeneratedPlan['weatherForecast'] = undefined;
-  if (selected.length > 0 && selected[0].lat && selected[0].lng) {
-    try {
-      const weather = await fetchWeatherForCoordinates(selected[0].lat, selected[0].lng);
-      if (weather && weather.current) {
-        const forecastDays: WeatherDaySummary[] = [];
-        if (weather.daily?.time) {
-          for (let d = 0; d < Math.min(daysCount, weather.daily.time.length); d++) {
-            forecastDays.push({
-              date: weather.daily.time[d],
-              maxTemp: weather.daily.temperature_2m_max[d] ?? weather.current.temperature,
-              minTemp: weather.daily.temperature_2m_min[d] ?? weather.current.temperature - 5,
-              conditionText: getWeatherConditionText(weather.daily.weathercode[d] ?? weather.current.weathercode),
-            });
-          }
+  try {
+    const weather = await fetchWeatherForCoordinates(cityInfo.lat, cityInfo.lng);
+    if (weather && weather.current) {
+      const forecastDays: WeatherDaySummary[] = [];
+      if (weather.daily?.time) {
+        for (let d = 0; d < Math.min(daysCount, weather.daily.time.length); d++) {
+          forecastDays.push({
+            date: weather.daily.time[d],
+            maxTemp: weather.daily.temperature_2m_max[d] ?? weather.current.temperature,
+            minTemp: weather.daily.temperature_2m_min[d] ?? weather.current.temperature - 5,
+            conditionText: getWeatherConditionText(weather.daily.weathercode[d] ?? weather.current.weathercode),
+          });
         }
-
-        weatherForecast = {
-          currentTemp: weather.current.temperature,
-          conditionText: weather.current.conditionText,
-          apparentTemp: weather.current.apparentTemperature,
-          windspeed: weather.current.windspeed,
-          forecastDays,
-        };
       }
-    } catch (err) {
-      console.warn('Weather fetch skipped during plan generation:', err);
+
+      weatherForecast = {
+        currentTemp: weather.current.temperature,
+        conditionText: weather.current.conditionText,
+        apparentTemp: weather.current.apparentTemperature,
+        windspeed: weather.current.windspeed,
+        forecastDays,
+      };
     }
+  } catch (err) {
+    console.warn('Weather fetch skipped during plan generation:', err);
   }
 
-  // 5. Structure the Days with Spatial Routing & Pacing
+  // 5. Structure Days with Verified Attractions & Spatial Transit
   const timeSlots: ('Morning' | 'Afternoon' | 'Evening')[] = ['Morning', 'Afternoon', 'Evening', 'Evening'];
   const fallbackDayThemes = [
-    { title: 'Iconic Foundations', theme: 'Signature architectural marvels & city heritage' },
-    { title: 'Art & Culture Odyssey', theme: 'World-class museums & timeless neighborhood alleys' },
-    { title: 'Nature & Panoramic Horizons', theme: 'Serene garden walks & majestic sunset viewpoints' },
-    { title: 'Culinary & Vibrant Streets', theme: 'Historic markets & sensory street discoveries' },
-    { title: 'Hidden Gems & Retreat', theme: 'Quaint shrines, artisan quarter & relaxed pacing' },
-    { title: 'Coastal Breeze & Grand Plazas', theme: 'Waterside strolls & open-air monuments' },
-    { title: 'Grand Finale Celebration', theme: 'Memorable skyline vistas & celebration dinner' },
+    { title: 'Historic Foundations & Icons', theme: 'Architectural landmarks & cultural heritage' },
+    { title: 'Art & Cultural Traditions', theme: 'Artisan quarters, museums & historic markets' },
+    { title: 'Panoramic Horizons & Serenity', theme: 'Scenic nature walks, viewpoints & sunset vistas' },
+    { title: 'Gastronomy & Street Vibrancy', theme: 'Heritage tasting tours & evening strolls' },
+    { title: 'Sacred Sanctums & Quiet Corners', theme: 'Historic temples, gardens & contemplative courtyards' },
+    { title: 'Grand Plazas & Waterside Paths', theme: 'Promenades & open-air architectural wonders' },
+    { title: 'Grand Finale Celebration', theme: 'Panoramic city vistas & memorable celebratory dinner' },
   ];
 
   const days: DayPlan[] = [];
-  let itemIdx = 0;
+  let poolIdx = 0;
 
-  for (let i = 1; i <= daysCount; i++) {
-    const aiDay = geminiData?.days?.find((d: any) => d.dayNumber === i);
-    const themeInfo = fallbackDayThemes[(i - 1) % fallbackDayThemes.length];
+  for (let d = 1; d <= daysCount; d++) {
+    const aiDay = geminiData?.days?.find((day: any) => day.dayNumber === d);
+    const themeInfo = fallbackDayThemes[(d - 1) % fallbackDayThemes.length];
 
-    const dayTitle = aiDay?.title || `Day ${i}: ${themeInfo.title}`;
+    const dayTitle = aiDay?.title || `Day ${d}: ${cityInfo.cityName} ${themeInfo.title}`;
     const dayTheme = aiDay?.theme || themeInfo.theme;
-    const insiderTip = aiDay?.insiderTip || `Start your ${rawCity || 'destination'} day unhurriedly with local morning coffee for optimal enjoyment.`;
+    const insiderTip = aiDay?.insiderTip || `Begin your exploration around 09:00 for optimal morning lighting and serene atmosphere in ${cityInfo.cityName}.`;
 
     const dayItems: PlanItem[] = [];
     let prevDest: Destination | null = null;
     let dayTotalDistanceKm = 0;
 
     for (let slot = 0; slot < itemsPerDay; slot++) {
-      if (itemIdx < selected.length) {
-        const dest = selected[itemIdx];
-        const timeSlot = timeSlots[slot] || 'Evening';
+      let dest: Destination | undefined = undefined;
+      let suggestionNote = `Allow 1.5 - 2 hours to soak in the cultural atmosphere and architectural details.`;
+      let timeSlot = timeSlots[slot] || 'Evening';
+      let estimatedHours = 2;
 
-        // Calculate distance from previous stop if applicable
-        let transitFromPrevKm = 0;
-        let transitTimeMin = 0;
-
-        if (prevDest && dest.lat && dest.lng && prevDest.lat && prevDest.lng) {
-          transitFromPrevKm = haversineDistanceKm(prevDest.lat, prevDest.lng, dest.lat, dest.lng);
-          dayTotalDistanceKm += transitFromPrevKm;
-          transitTimeMin = Math.max(5, Math.round((transitFromPrevKm / 22) * 60)); // ~22km/h city average
-        }
-
-        // Check if Gemini provided specific suggestion note
-        const aiNote = aiDay?.items?.[slot]?.suggestionNote;
-        const suggestionNote =
-          aiNote ||
-          `Recommended ${timeSlot.toLowerCase()} visit. Allow 1.5 - 2 hours to soak in the atmosphere.`;
-
-        dayItems.push({
-          destination: dest,
-          timeSlot,
-          suggestionNote,
-          estimatedHours: 2,
-          transitFromPrevKm: transitFromPrevKm > 0 ? transitFromPrevKm : undefined,
-          transitTimeMin: transitTimeMin > 0 ? transitTimeMin : undefined,
-        });
-
-        prevDest = dest;
-        itemIdx++;
+      // Attempt to map from AI assignment
+      if (aiDay?.items?.[slot]) {
+        const aiItem = aiDay.items[slot];
+        dest = validAttractions.find(a => a.id === aiItem.destinationId);
+        if (aiItem.suggestionNote) suggestionNote = aiItem.suggestionNote;
+        if (aiItem.timeSlot) timeSlot = aiItem.timeSlot as any;
+        if (aiItem.estimatedHours) estimatedHours = aiItem.estimatedHours;
       }
+
+      // Fallback sequentially from verified attractions pool
+      if (!dest) {
+        dest = validAttractions[poolIdx % validAttractions.length];
+        poolIdx++;
+      }
+
+      // Real-world Haversine transit calculation
+      let transitFromPrevKm: number | undefined = undefined;
+      let transitTimeMin: number | undefined = undefined;
+
+      if (prevDest && dest.lat && dest.lng && prevDest.lat && prevDest.lng) {
+        transitFromPrevKm = haversineDistanceKm(prevDest.lat, prevDest.lng, dest.lat, dest.lng);
+        dayTotalDistanceKm += transitFromPrevKm;
+        transitTimeMin = Math.max(5, Math.round((transitFromPrevKm / 24) * 60));
+      }
+
+      dayItems.push({
+        destination: dest,
+        timeSlot,
+        suggestionNote,
+        estimatedHours,
+        transitFromPrevKm: transitFromPrevKm && transitFromPrevKm > 0 ? transitFromPrevKm : undefined,
+        transitTimeMin: transitTimeMin && transitTimeMin > 0 ? transitTimeMin : undefined,
+      });
+
+      prevDest = dest;
     }
 
     days.push({
-      dayNumber: i,
+      dayNumber: d,
       title: dayTitle,
       theme: dayTheme,
       insiderTip,
@@ -618,32 +505,37 @@ Format your response strictly as valid pure JSON with NO markdown backticks:
     });
   }
 
-  // 6. Assemble Culinary & Etiquette
+  // 6. Assemble Final Plan
   const diningHighlights: DiningHighlight[] =
     geminiData?.diningHighlights && geminiData.diningHighlights.length > 0
       ? geminiData.diningHighlights
-      : getCuratedDining(rawCity);
+      : getCuratedDining(cityInfo.cityName);
 
   const culturalEtiquette: string[] =
     geminiData?.culturalEtiquette && geminiData.culturalEtiquette.length > 0
       ? geminiData.culturalEtiquette
-      : getCuratedEtiquette(rawCity);
+      : getCuratedEtiquette(cityInfo.cityName);
 
   const summary =
     geminiData?.summary ||
-    `A handcrafted ${daysCount}-day journey through ${rawCity || 'the world'}, harmonizing verified cultural landmarks, scenic points of interest, and authentic local rhythm.`;
+    `A handcrafted ${daysCount}-day journey across the verified cultural landmarks, architectural marvels, and authentic local experiences of ${cityInfo.cityName}, ${cityInfo.countryName}.`;
 
-  return {
-    city: rawCity || 'Global Selected Tour',
+  const finalPlan: GeneratedPlan = {
+    city: cityInfo.cityName,
     daysCount,
     pace,
     interests,
     days,
-    totalPlaces: selected.length,
+    totalPlaces: days.reduce((sum, d) => sum + d.items.length, 0),
     aiEngine,
     summary,
     culturalEtiquette,
     diningHighlights,
     weatherForecast,
   };
+
+  // Cache for 30 minutes
+  PLAN_CACHE.set(cacheKey, { plan: finalPlan, expiresAt: Date.now() + 30 * 60 * 1000 });
+
+  return finalPlan;
 }

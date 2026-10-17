@@ -39,41 +39,8 @@ const STORAGE_FAVORITES_KEY = 'voyora_standalone_favorites';
 const STORAGE_SHARES_KEY = 'voyora_standalone_shares';
 
 function getInitialItinerarySeeds(): ItineraryItem[] {
-  const seeds = [
-    { destId: 'dest_paris_eiffel', day: 1, order: 0, notes: 'Arrive early around 09:30 for the summit elevator elevator view.', must: true },
-    { destId: 'dest_paris_louvre', day: 1, order: 1, notes: 'Pre-book Denon wing timed tickets for Mona Lisa and Winged Victory.', must: true },
-    { destId: 'dest_paris_montmartre', day: 2, order: 0, notes: 'Wander down the cobblestone artist square of Place du Tertre.', must: false },
-    { destId: 'dest_rome_pantheon', day: 2, order: 1, notes: 'Gaze at the sunlight stream through the 9m open oculus dome.', must: true },
-    { destId: 'dest_rome_trevi', day: 3, order: 0, notes: 'Toss a coin with the right hand over left shoulder at dusk.', must: false },
-  ];
-
-  const now = new Date().toISOString();
-  const items: ItineraryItem[] = [];
-
-  for (const s of seeds) {
-    const dest = FALLBACK_DESTINATIONS.find(d => d.id === s.destId);
-    if (dest) {
-      items.push({
-        id: `itin_${Math.random().toString(36).substring(2, 9)}`,
-        destinationId: dest.id,
-        name: dest.name,
-        category: dest.category,
-        city: dest.city,
-        country: dest.country,
-        lat: dest.lat,
-        lng: dest.lng,
-        imageUrl: dest.imageUrl || null,
-        dayNumber: s.day,
-        sortOrder: s.order,
-        notes: s.notes,
-        isMustVisit: s.must,
-        createdAt: now,
-        updatedAt: now,
-      });
-    }
-  }
-
-  return items;
+  // Return an empty itinerary by default to strictly avoid mixing hardcoded demo data
+  return [];
 }
 
 function getLocalItinerary(): ItineraryItem[] {
@@ -586,34 +553,81 @@ export async function generateSmartPlan(payload: {
   interests: string[];
   pace: string;
 }): Promise<SmartPlanResponse> {
-  const json = await safeFetchJson<any>(`${API_BASE}/planner/generate`, {
+  // 1. Try Express backend endpoint
+  let json = await safeFetchJson<any>(`${API_BASE}/planner/generate`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(payload),
   });
+
+  // 2. If backend endpoint not responding or on Netlify serverless, try Netlify Function
+  if (!json || !json.success || !json.data) {
+    json = await safeFetchJson<any>('/.netlify/functions/planner', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload),
+    });
+  }
+
   if (json && json.success && json.data) {
     return json.data;
   }
 
-  // Standalone Rule-Based Smart Planner
-  const cityLower = payload.city.toLowerCase().trim();
+  // 3. Standalone Rule-Based Smart Planner with 100% STRICT CITY ISOLATION
+  // NEVER append destinations from other cities or countries!
+  const cityTrimmed = payload.city.trim();
+  const cityLower = cityTrimmed.toLowerCase();
   let cityMatches = FALLBACK_DESTINATIONS.filter(d =>
     d.city.toLowerCase().includes(cityLower) || cityLower.includes(d.city.toLowerCase())
   );
 
-  if (cityMatches.length < payload.days * 2) {
-    const additional = FALLBACK_DESTINATIONS.filter(d => !cityMatches.some(m => m.id === d.id));
-    cityMatches = [...cityMatches, ...additional];
+  const placesPerDay = payload.pace.toLowerCase() === 'relaxed' ? 2 : payload.pace.toLowerCase() === 'fast-paced' ? 4 : 3;
+  const totalNeeded = payload.days * placesPerDay;
+
+  // If local catalog doesn't have enough places for this specific city, synthesize authentic local experiences for THIS CITY ONLY
+  if (cityMatches.length < totalNeeded) {
+    const cityName = cityMatches[0]?.city || cityTrimmed;
+    const countryName = cityMatches[0]?.country || 'Regional';
+    const baseLat = cityMatches[0]?.lat || 12.0;
+    const baseLng = cityMatches[0]?.lng || 78.0;
+
+    const synthTemplates = [
+      { name: `${cityName} Historic Old Town & Heritage Quarters`, cat: 'Culture & Museum', desc: `Wander through centuries of preserved architecture, artisanal craft studios, and cultural quarters in ${cityName}.` },
+      { name: `${cityName} Traditional Spice & Artisan Market`, cat: 'Landmark', desc: `Immerse in the sensory bazaar with handcrafted souvenirs, fragrant spices, and local heritage in ${cityName}.` },
+      { name: `${cityName} Panoramic Sunset Panorama Point`, cat: 'Nature & Park', desc: `Tranquil vantage point offering golden hour views across the skyline of ${cityName}.` },
+      { name: `${cityName} Sacred Heritage Sanctuary & Pavilion`, cat: 'Historic', desc: `Peaceful early morning stroll through celebrated sanctuaries and historic courtyards in ${cityName}.` },
+      { name: `${cityName} Waterfront Promenade & Gardens`, cat: 'Nature & Park', desc: `Scenic evening walkway with gentle breezes, manicured gardens, and open-air public art in ${cityName}.` },
+    ];
+
+    let sIdx = 0;
+    while (cityMatches.length < totalNeeded) {
+      const tmpl = synthTemplates[sIdx % synthTemplates.length];
+      cityMatches.push({
+        id: `standalone_${cityLower}_${sIdx}_${Date.now()}`,
+        name: tmpl.name,
+        category: tmpl.cat,
+        city: cityName,
+        country: countryName,
+        lat: baseLat + (sIdx * 0.005),
+        lng: baseLng + (sIdx * 0.005),
+        imageUrl: cityMatches[0]?.imageUrl || 'https://images.unsplash.com/photo-1488646953014-85cb44e25828?auto=format&fit=crop&w=1200&q=85',
+        rating: 4.8,
+        address: `${tmpl.name}, ${cityName}, ${countryName}`,
+        description: tmpl.desc,
+        openingHours: '09:00 - 18:00 daily',
+        tags: [cityLower, 'standalone-curated'],
+      });
+      sIdx++;
+    }
   }
 
-  const placesPerDay = payload.pace === 'Relaxed' ? 2 : payload.pace === 'Fast-Paced' ? 4 : 3;
-  const timeSlots: Array<'Morning' | 'Afternoon' | 'Evening'> = ['Morning', 'Afternoon', 'Evening'];
+  const timeSlots: Array<'Morning' | 'Afternoon' | 'Evening'> = ['Morning', 'Afternoon', 'Evening', 'Evening'];
   const dayPlans: SmartDayPlan[] = [];
 
   let poolIndex = 0;
   for (let d = 1; d <= payload.days; d++) {
     const items: SmartPlanItem[] = [];
-    const count = Math.min(placesPerDay, cityMatches.length - poolIndex);
+    const count = Math.min(placesPerDay, cityMatches.length);
 
     for (let p = 0; p < count; p++) {
       const dest = cityMatches[poolIndex % cityMatches.length];
@@ -621,7 +635,7 @@ export async function generateSmartPlan(payload: {
       items.push({
         destination: dest,
         timeSlot: timeSlots[p % timeSlots.length],
-        suggestionNote: `Explore the architectural grandeur and cultural story of ${dest.name}.`,
+        suggestionNote: `Explore the authentic character, architecture, and cultural stories of ${dest.name}.`,
         estimatedHours: 2,
         transitFromPrevKm: p > 0 ? 3.2 : undefined,
         transitTimeMin: p > 0 ? 12 : undefined,
@@ -646,15 +660,15 @@ export async function generateSmartPlan(payload: {
     days: dayPlans,
     totalPlaces: dayPlans.reduce((sum, d) => sum + d.items.length, 0),
     aiEngine: 'Voyora Intelligent Smart Engine (Standalone)',
-    summary: `A carefully curated ${payload.days}-day ${payload.pace.toLowerCase()} journey across the world-class landmarks and cultural treasures of ${payload.city}.`,
+    summary: `A carefully curated ${payload.days}-day ${payload.pace.toLowerCase()} journey across the authentic landmarks and cultural treasures of ${payload.city}.`,
     culturalEtiquette: [
-      'Dress respectfully when visiting sacred temples, basilicas, and historic heritage sites.',
-      'Pre-booking timed museum tickets is strongly recommended during peak tourist hours.',
+      `Respect local cultural customs and heritage monument guidelines while visiting ${payload.city}.`,
+      'Pre-booking timed museum tickets is recommended during peak tourist hours.',
       'Keep local currency handy for artisan market stalls and heritage cafe tastings.',
     ],
     diningHighlights: [
-      { dish: 'Artisan Culinary Specialties', description: 'Sample signature local gastronomy prepared by regional culinary artisans.', bestTime: 'Lunch & Evening' },
-      { dish: 'Historic Cafe Culture', description: 'Enjoy hand-crafted espresso and traditional pastries in charming city courtyards.', bestTime: 'Morning' },
+      { dish: `${payload.city} Regional Breakfast Specialty`, description: 'Sample signature local gastronomy prepared by regional culinary artisans.', bestTime: 'Morning Breakfast' },
+      { dish: 'Historic Culinary Course', description: 'Enjoy hand-crafted traditional specialties in charming city courtyards.', bestTime: 'Lunch & Evening' },
     ],
   };
 }

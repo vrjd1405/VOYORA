@@ -2,6 +2,19 @@
   base = "client"
   publish = "dist"
   command = "npm run build"
+  functions = "../netlify/functions"
+
+[[redirects]]
+  from = "/api/planner/generate"
+  to = "/.netlify/functions/planner"
+  status = 200
+  force = true
+
+[[redirects]]
+  from = "/api/planner/*"
+  to = "/.netlify/functions/planner"
+  status = 200
+  force = true
 
 [[redirects]]
   from = "/*"
