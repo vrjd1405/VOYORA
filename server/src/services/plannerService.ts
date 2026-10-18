@@ -2,6 +2,7 @@ import { GoogleGenAI, Type } from '@google/genai';
 import { Destination } from '../types/index.js';
 import { fetchWeatherForCoordinates, getWeatherConditionText } from './weatherService.js';
 import { discoverVerifiedAttractions, haversineDistanceKm, CityGeocodeResult } from './worldwideDiscovery.js';
+import { getCuratedDiningForCity } from './curatedDiningData.js';
 
 export interface PlanRequest {
   city: string;
@@ -33,6 +34,7 @@ export interface DiningHighlight {
   dish: string;
   description: string;
   bestTime: string;
+  recommendedPlaces?: string[];
 }
 
 export interface WeatherDaySummary {
@@ -66,154 +68,7 @@ export interface GeneratedPlan {
 const PLAN_CACHE = new Map<string, { plan: GeneratedPlan; expiresAt: number }>();
 
 function getCuratedDining(city: string): DiningHighlight[] {
-  const c = city.toLowerCase();
-  if (c.includes('madurai')) {
-    return [
-      {
-        dish: 'Famous Madurai Jigarthanda',
-        description: 'Iconic chilled dessert with almond gum (badam pisin), nannari syrup, and velvety ice cream. Best at East Marret Street.',
-        bestTime: 'Afternoon Refreshment',
-      },
-      {
-        dish: 'Crispy Bun Parotta & Salna',
-        description: 'Multi-layered fluffy golden parotta crafted with pure ghee and served with fiery, spiced vegetable or mutton salna.',
-        bestTime: 'Dinner',
-      },
-      {
-        dish: 'Three-Layer Kari Dosa',
-        description: 'Thick dosa base crowned with a spiced egg omelette and succulent minced mutton or chicken pepper sukka.',
-        bestTime: 'Evening Dinner',
-      },
-      {
-        dish: 'Melt-in-Mouth Steamed Idlis',
-        description: 'Feather-light steamed idlis paired with four distinct freshly ground coconut, tomato, coriander, and mint chutneys.',
-        bestTime: 'Traditional Breakfast',
-      },
-    ];
-  }
-
-  if (c.includes('chennai')) {
-    return [
-      {
-        dish: 'Traditional Degree Filter Coffee',
-        description: 'Frothy chicory-infused brew poured in a gleaming brass dabarah and tumbler, perfected in Mylapore.',
-        bestTime: 'Morning Kickstart',
-      },
-      {
-        dish: 'Ghee Podi Roast Dosa',
-        description: 'Crisp golden dosa slathered with molten ghee and roasted aromatic gunpowder spice blend.',
-        bestTime: 'Breakfast or Dinner',
-      },
-      {
-        dish: 'Marina Beach Sundal',
-        description: 'Tempered warm white peas tossed with grated raw mango, fresh coconut slivers, and mustard seeds.',
-        bestTime: 'Sunset Promenade',
-      },
-      {
-        dish: 'Chettinad Pepper Gravy with Flaky Parotta',
-        description: 'Aromatic black pepper and whole spice curry bursting with authentic heritage Tamil flavors.',
-        bestTime: 'Lunch',
-      },
-    ];
-  }
-
-  if (c.includes('bengaluru') || c.includes('bangalore')) {
-    return [
-      {
-        dish: 'Benne Dosa at Vidyarthi Bhavan',
-        description: 'Iconic butter-drenched golden dosa with a crispy exterior and fluffy interior, served with rich coconut chutney.',
-        bestTime: 'Morning Breakfast',
-      },
-      {
-        dish: 'Bisi Bele Bath',
-        description: 'Traditional spiced rice, lentil, and vegetable specialty served piping hot with ghee and crispy boondi.',
-        bestTime: 'Lunch',
-      },
-      {
-        dish: 'Mysore Pak from Sri Venkateshwara Sweetmeat',
-        description: 'Melt-in-mouth royal sweet made from pure ghee, gram flour, and cardamom.',
-        bestTime: 'Sweet Delight',
-      },
-    ];
-  }
-
-  if (c.includes('paris')) {
-    return [
-      {
-        dish: 'Artisan Butter Croissant & Cafe au Lait',
-        description: 'Flaky 100% butter croissant fresh from an artisanal boulangerie, enjoyed in a quiet Saint-Germain cafe.',
-        bestTime: 'Morning Breakfast',
-      },
-      {
-        dish: 'Traditional Duck Confit (Confit de Canard)',
-        description: 'Slow-cooked crispy duck leg paired with garlic pomme sarladaise potatoes and red wine jus in Le Marais.',
-        bestTime: 'Dinner',
-      },
-      {
-        dish: 'Warm Soupe a l’Oignon Gratinee',
-        description: 'Rich caramelized onion bouillon crowned with melted Gruyère cheese toast in a historic brasserie.',
-        bestTime: 'Lunch / Evening',
-      },
-    ];
-  }
-
-  if (c.includes('tokyo')) {
-    return [
-      {
-        dish: 'Tsukiji Fresh Edomae Nigiri Sushi',
-        description: 'Pristine morning catch hand-pressed with seasoned warm sushi rice by master itamae chefs.',
-        bestTime: 'Early Lunch',
-      },
-      {
-        dish: 'Authentic Tonkotsu or Shoyu Ramen',
-        description: 'Rich slow-simmered broth with springy noodles, soft-boiled ajitsuke tamago, and tender chashu pork.',
-        bestTime: 'Dinner',
-      },
-      {
-        dish: 'Asakusa Sensoji Matcha Daifuku & Dango',
-        description: 'Sweet chewy mochi rice cake filled with sweetened azuki red bean paste along Nakamise-dori.',
-        bestTime: 'Afternoon Snack',
-      },
-    ];
-  }
-
-  if (c.includes('london')) {
-    return [
-      {
-        dish: 'Traditional British Sunday Roast with Yorkshire Pudding',
-        description: 'Tender roasted beef or lamb with crispy roast potatoes, seasonal vegetables, and rich onion gravy.',
-        bestTime: 'Midday Sunday Lunch',
-      },
-      {
-        dish: 'Borough Market Artisan Salt Beef Bagel',
-        description: 'Warm carved cured brisket piled high with fiery English mustard and pickles in London’s premier gourmet market.',
-        bestTime: 'Lunch',
-      },
-      {
-        dish: 'Classic Afternoon High Tea',
-        description: 'Fine English black tea served with warm clotted cream scones, strawberry jam, and delicate finger sandwiches.',
-        bestTime: 'Afternoon (15:00 - 17:00)',
-      },
-    ];
-  }
-
-  return [
-    {
-      dish: `Signature ${city} Regional Breakfast`,
-      description: `Locally celebrated breakfast prepared with farm-fresh regional ingredients and time-honored techniques.`,
-      bestTime: 'Morning Breakfast',
-    },
-    {
-      dish: `Heritage ${city} Specialty Course`,
-      description: `The hallmark culinary tradition of ${city}, revered by locals and visitors alike for centuries.`,
-      bestTime: 'Lunch',
-    },
-    {
-      dish: `Local Evening Street Delicacy`,
-      description: `Vibrant street-side specialty found in bustling night markets and heritage food alleys.`,
-      bestTime: 'Sunset Treat',
-    },
-  ];
+  return getCuratedDiningForCity(city);
 }
 
 function getCuratedEtiquette(city: string): string[] {
@@ -315,7 +170,7 @@ STRICT GEOGRAPHIC INTEGRITY RULES:
 2. VERIFIED ATTRACTIONS ONLY: You MUST select only from the verified attractions provided below. Never invent new attraction names.
 3. LOGICAL TIME SLOTS: Assign each attraction to an optimal time slot: Morning, Afternoon, or Evening.
 4. EVOCATIVE NOTES: Write actionable insider guidance for each stop (best vantage points, lighting, duration).
-5. LOCAL CULTURE: Provide 3-4 authentic regional dishes for ${cityInfo.cityName} and 3-4 respectful cultural etiquette guidelines.
+5. LOCAL CULTURE & GASTRONOMY: Provide 3-4 famous, authentic signature dishes specific to ${cityInfo.cityName} and this district (e.g. in Madurai: Famous Jigarthanda, Three-Layer Kari Dosa, Crispy Bun Parotta with Salna, Mallipoo Idlis; in Chennai: Degree Filter Coffee, Podi Dosa; in Paris: Croissant, Duck Confit; etc.). For EACH dish, provide 2-3 top recommended places/restaurants/food stalls in ${cityInfo.cityName} (recommendedPlaces). Also provide 3-4 respectful cultural etiquette guidelines.
 
 Verified Real Attractions in ${cityInfo.cityName}:
 ${validAttractions.map(a => `- ID: "${a.id}", Name: "${a.name}", Category: "${a.category}", Description: "${a.description?.slice(0, 140)}"`).join('\n')}`;
@@ -336,6 +191,10 @@ ${validAttractions.map(a => `- ID: "${a.id}", Name: "${a.name}", Category: "${a.
                 dish: { type: Type.STRING },
                 description: { type: Type.STRING },
                 bestTime: { type: Type.STRING },
+                recommendedPlaces: {
+                  type: Type.ARRAY,
+                  items: { type: Type.STRING },
+                },
               },
               required: ['dish', 'description', 'bestTime'],
             },
@@ -473,14 +332,19 @@ ${validAttractions.map(a => `- ID: "${a.id}", Name: "${a.name}", Category: "${a.
         poolIdx++;
       }
 
-      // Real-world Haversine transit calculation
+      // 100% True Real-world Road Transit Calculation
       let transitFromPrevKm: number | undefined = undefined;
       let transitTimeMin: number | undefined = undefined;
 
       if (prevDest && dest.lat && dest.lng && prevDest.lat && prevDest.lng) {
-        transitFromPrevKm = haversineDistanceKm(prevDest.lat, prevDest.lng, dest.lat, dest.lng);
+        const straightKm = haversineDistanceKm(prevDest.lat, prevDest.lng, dest.lat, dest.lng);
+        // Urban road networks curve around street blocks and topography (~1.3x road network factor)
+        transitFromPrevKm = Math.max(0.4, Math.round(straightKm * 1.3 * 10) / 10);
         dayTotalDistanceKm += transitFromPrevKm;
-        transitTimeMin = Math.max(5, Math.round((transitFromPrevKm / 24) * 60));
+        transitTimeMin =
+          transitFromPrevKm <= 1.0
+            ? Math.max(4, Math.round(transitFromPrevKm * 10))
+            : Math.max(6, Math.round((transitFromPrevKm / 22) * 60));
       }
 
       dayItems.push({

@@ -47,8 +47,8 @@ export const HomePage: React.FC<HomePageProps> = ({ onNavigate }) => {
   const [activeRegion, setActiveRegion] = useState<'tamil_nadu' | 'india' | 'global'>('tamil_nadu');
 
   const regionCities = {
-    tamil_nadu: ['Madurai', 'Chennai', 'Ooty', 'Coimbatore', 'Mahabalipuram', 'Thanjavur', 'Kanyakumari', 'Rameswaram'],
-    india: ['Bengaluru', 'Delhi', 'Mumbai', 'Jaipur', 'Kochi'],
+    tamil_nadu: ['Madurai', 'Chennai', 'Pondicherry', 'Tirunelveli', 'Kumbakonam', 'Ooty', 'Coimbatore', 'Mahabalipuram', 'Thanjavur', 'Kanyakumari', 'Rameswaram'],
+    india: ['Bengaluru', 'Delhi', 'Mumbai', 'Jaipur', 'Amritsar', 'Udaipur', 'Kochi', 'Varanasi'],
     global: ['Paris', 'Tokyo', 'Rome', 'Barcelona', 'Kyoto', 'London'],
   };
 

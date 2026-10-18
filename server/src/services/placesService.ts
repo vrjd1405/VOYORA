@@ -634,6 +634,13 @@ export function matchesCity(destCity: string, filterCity: string, tags?: string[
     'varanasi': ['varanasi', 'banaras', 'kashi'],
     'banaras': ['varanasi', 'banaras', 'kashi'],
     'kashi': ['varanasi', 'banaras', 'kashi'],
+    'pondicherry': ['pondicherry', 'puducherry', 'pondy', 'white town', 'auroville'],
+    'puducherry': ['pondicherry', 'puducherry', 'pondy', 'white town', 'auroville'],
+    'tirunelveli': ['tirunelveli', 'nellai'],
+    'nellai': ['tirunelveli', 'nellai'],
+    'kumbakonam': ['kumbakonam', 'darasuram'],
+    'amritsar': ['amritsar', 'golden temple', 'harmandir'],
+    'udaipur': ['udaipur', 'city of lakes', 'mewar'],
     'hyderabad': ['hyderabad'],
     'agra': ['agra'],
     'goa': ['goa', 'panaji', 'old goa', 'candolim', 'calangute']

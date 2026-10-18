@@ -88,6 +88,7 @@ export interface DiningHighlight {
   dish: string;
   description: string;
   bestTime: string;
+  recommendedPlaces?: string[];
 }
 
 export interface SmartPlanItem {

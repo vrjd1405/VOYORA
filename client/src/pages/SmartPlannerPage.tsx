@@ -57,6 +57,9 @@ export const SmartPlannerPage: React.FC<SmartPlannerPageProps> = ({ onNavigate }
       cities: [
         'Madurai',
         'Chennai',
+        'Pondicherry',
+        'Tirunelveli',
+        'Kumbakonam',
         'Ooty',
         'Coimbatore',
         'Mahabalipuram',
@@ -71,7 +74,7 @@ export const SmartPlannerPage: React.FC<SmartPlannerPageProps> = ({ onNavigate }
     {
       group: 'Pan-India Highlights',
       theme: 'amber',
-      cities: ['Jaipur', 'Delhi', 'Mumbai', 'Varanasi', 'Agra', 'Goa', 'Hyderabad'],
+      cities: ['Jaipur', 'Delhi', 'Mumbai', 'Varanasi', 'Amritsar', 'Udaipur', 'Agra', 'Goa', 'Hyderabad'],
     },
     {
       group: 'Global Realms & Wonders',
@@ -193,7 +196,7 @@ export const SmartPlannerPage: React.FC<SmartPlannerPageProps> = ({ onNavigate }
             `========================================`,
             `AUTHENTIC REGIONAL CULINARY HIGHLIGHTS:`,
             ...generatedPlan.diningHighlights.map(
-              f => `  • ${f.dish} (${f.bestTime}): ${f.description}`
+              f => `  • ${f.dish} (${f.bestTime}): ${f.description}` + (f.recommendedPlaces && f.recommendedPlaces.length > 0 ? ` [Best Places: ${f.recommendedPlaces.join(', ')}]` : '')
             ),
             '',
           ]
@@ -222,9 +225,48 @@ export const SmartPlannerPage: React.FC<SmartPlannerPageProps> = ({ onNavigate }
     if (!generatedPlan) return;
     const updatedDays = generatedPlan.days.map(d => {
       if (d.dayNumber === dayNumber) {
+        const remainingItems = d.items.filter(item => item.destination.id !== destId);
+        let dayTotalKm = 0;
+        let prevItem: typeof remainingItems[0] | null = null;
+
+        const recomputedItems = remainingItems.map((item, idx) => {
+          if (idx === 0 || !prevItem) {
+            prevItem = item;
+            return { ...item, transitFromPrevKm: undefined, transitTimeMin: undefined };
+          }
+
+          let transitFromPrevKm: number | undefined = undefined;
+          let transitTimeMin: number | undefined = undefined;
+
+          if (
+            prevItem.destination.lat &&
+            prevItem.destination.lng &&
+            item.destination.lat &&
+            item.destination.lng
+          ) {
+            const transit = api.calculateRoadDistanceAndTransit(
+              prevItem.destination.lat,
+              prevItem.destination.lng,
+              item.destination.lat,
+              item.destination.lng
+            );
+            transitFromPrevKm = transit.distanceKm;
+            transitTimeMin = transit.transitTimeMin;
+            dayTotalKm += transitFromPrevKm;
+          }
+
+          prevItem = item;
+          return {
+            ...item,
+            transitFromPrevKm,
+            transitTimeMin,
+          };
+        });
+
         return {
           ...d,
-          items: d.items.filter(item => item.destination.id !== destId),
+          items: recomputedItems,
+          totalTransitKm: Math.round(dayTotalKm * 10) / 10,
         };
       }
       return d;
@@ -560,6 +602,21 @@ export const SmartPlannerPage: React.FC<SmartPlannerPageProps> = ({ onNavigate }
                         <p className="dish-desc">
                           {dish.description}
                         </p>
+                        {dish.recommendedPlaces && dish.recommendedPlaces.length > 0 && (
+                          <div className="dish-places-box">
+                            <div className="dish-places-label">
+                              <MapPin size={11} className="text-amber-300 flex-shrink-0" />
+                              <span>Best Places in {generatedPlan.city}:</span>
+                            </div>
+                            <div className="dish-places-list">
+                              {dish.recommendedPlaces.map((place, pIdx) => (
+                                <span key={pIdx} className="culinary-place-pill">
+                                  {place}
+                                </span>
+                              ))}
+                            </div>
+                          </div>
+                        )}
                       </div>
                     ))}
                   </div>
@@ -1658,6 +1715,46 @@ export const SmartPlannerPage: React.FC<SmartPlannerPageProps> = ({ onNavigate }
           line-height: 1.6;
           margin-top: 6px;
           font-weight: 500;
+        }
+        .dish-places-box {
+          margin-top: 10px;
+          padding: 8px 12px;
+          background: rgba(15, 23, 42, 0.7);
+          border: 1px dashed rgba(251, 191, 36, 0.4);
+          border-radius: 10px;
+        }
+        .dish-places-label {
+          display: flex;
+          align-items: center;
+          gap: 5px;
+          font-size: 0.76rem;
+          font-weight: 800;
+          color: #fbbf24;
+          margin-bottom: 6px;
+          text-transform: uppercase;
+          letter-spacing: 0.05em;
+        }
+        .dish-places-list {
+          display: flex;
+          flex-wrap: wrap;
+          gap: 6px;
+        }
+        .culinary-place-pill {
+          display: inline-flex;
+          align-items: center;
+          font-size: 0.75rem;
+          font-weight: 700;
+          color: #f1f5f9;
+          background: rgba(245, 158, 11, 0.18);
+          border: 1px solid rgba(251, 191, 36, 0.45);
+          padding: 3px 9px;
+          border-radius: 9999px;
+          transition: all 0.2s ease;
+        }
+        .culinary-place-pill:hover {
+          background: rgba(245, 158, 11, 0.35);
+          border-color: #fde047;
+          color: #ffffff;
         }
         .etiquette-tip-row {
           display: flex;

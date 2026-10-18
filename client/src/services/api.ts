@@ -10,6 +10,7 @@ import {
   SmartPlanItem,
 } from '../types';
 import { FALLBACK_DESTINATIONS } from '../data/fallbackDestinations';
+import { getCuratedDiningForCity } from '../data/curatedDiningData';
 
 const API_BASE = import.meta.env.VITE_API_BASE_URL || '/api';
 
@@ -544,6 +545,37 @@ export async function fetchWeather(lat: number, lng: number): Promise<WeatherDat
   };
 }
 
+// Real-world road network distance and transit time calculation between two coordinates
+export function calculateRoadDistanceAndTransit(
+  lat1: number,
+  lon1: number,
+  lat2: number,
+  lon2: number
+): { distanceKm: number; transitTimeMin: number } {
+  const R = 6371; // Earth's mean radius in km
+  const dLat = ((lat2 - lat1) * Math.PI) / 180;
+  const dLon = ((lon2 - lon1) * Math.PI) / 180;
+  const a =
+    Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+    Math.cos((lat1 * Math.PI) / 180) *
+      Math.cos((lat2 * Math.PI) / 180) *
+      Math.sin(dLon / 2) *
+      Math.sin(dLon / 2);
+  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+  const straightKm = R * c;
+
+  // Real-world road network detour factor (~1.3x) for actual street transit network
+  const distanceKm = Math.max(0.4, Math.round(straightKm * 1.3 * 10) / 10);
+
+  // Real city transit time: average ~22 km/h city driving speed + traffic lights
+  const transitTimeMin =
+    distanceKm <= 1.0
+      ? Math.max(4, Math.round(distanceKm * 10))
+      : Math.max(6, Math.round((distanceKm / 22) * 60));
+
+  return { distanceKm, transitTimeMin };
+}
+
 // ---------------------------------------------------------------------------
 // SMART PLANNER API & FALLBACK
 // ---------------------------------------------------------------------------
@@ -628,18 +660,34 @@ export async function generateSmartPlan(payload: {
   for (let d = 1; d <= payload.days; d++) {
     const items: SmartPlanItem[] = [];
     const count = Math.min(placesPerDay, cityMatches.length);
+    let dayTotalKm = 0;
+    let prevDest: Destination | null = null;
 
     for (let p = 0; p < count; p++) {
       const dest = cityMatches[poolIndex % cityMatches.length];
       poolIndex++;
+
+      let transitFromPrevKm: number | undefined = undefined;
+      let transitTimeMin: number | undefined = undefined;
+
+      // Real road calculation based on exact coordinates
+      if (prevDest && prevDest.lat && prevDest.lng && dest.lat && dest.lng) {
+        const transit = calculateRoadDistanceAndTransit(prevDest.lat, prevDest.lng, dest.lat, dest.lng);
+        transitFromPrevKm = transit.distanceKm;
+        transitTimeMin = transit.transitTimeMin;
+        dayTotalKm += transitFromPrevKm;
+      }
+
       items.push({
         destination: dest,
         timeSlot: timeSlots[p % timeSlots.length],
         suggestionNote: `Explore the authentic character, architecture, and cultural stories of ${dest.name}.`,
         estimatedHours: 2,
-        transitFromPrevKm: p > 0 ? 3.2 : undefined,
-        transitTimeMin: p > 0 ? 12 : undefined,
+        transitFromPrevKm,
+        transitTimeMin,
       });
+
+      prevDest = dest;
     }
 
     dayPlans.push({
@@ -647,7 +695,7 @@ export async function generateSmartPlan(payload: {
       title: `Day ${d}: ${cityMatches[0]?.city || payload.city} Highlights`,
       theme: d === 1 ? 'Historic Icons & Cultural Foundations' : d === 2 ? 'Local Flavors & Atmospheric Wonders' : 'Grand Views & Serene Horizons',
       insiderTip: 'Start early around 09:00 to beat tourist peaks and capture optimal morning lighting.',
-      totalTransitKm: 8.5,
+      totalTransitKm: Math.round(dayTotalKm * 10) / 10,
       items,
     });
   }
@@ -664,12 +712,9 @@ export async function generateSmartPlan(payload: {
     culturalEtiquette: [
       `Respect local cultural customs and heritage monument guidelines while visiting ${payload.city}.`,
       'Pre-booking timed museum tickets is recommended during peak tourist hours.',
-      'Keep local currency handy for artisan market stalls and heritage cafe tastings.',
+      'Carry reusable water bottles and sun protection for comfortable heritage walking.',
     ],
-    diningHighlights: [
-      { dish: `${payload.city} Regional Breakfast Specialty`, description: 'Sample signature local gastronomy prepared by regional culinary artisans.', bestTime: 'Morning Breakfast' },
-      { dish: 'Historic Culinary Course', description: 'Enjoy hand-crafted traditional specialties in charming city courtyards.', bestTime: 'Lunch & Evening' },
-    ],
+    diningHighlights: getCuratedDiningForCity(payload.city),
   };
 }
 

@@ -136,6 +136,9 @@ export const ExplorePage: React.FC<ExplorePageProps> = ({
     // Tamil Nadu & South India
     { id: 'Chennai', label: 'Chennai, Tamil Nadu' },
     { id: 'Madurai', label: 'Madurai, Tamil Nadu' },
+    { id: 'Pondicherry', label: 'Pondicherry (Puducherry)' },
+    { id: 'Tirunelveli', label: 'Tirunelveli (Nellai), Tamil Nadu' },
+    { id: 'Kumbakonam', label: 'Kumbakonam (Temple City), Tamil Nadu' },
     { id: 'Coimbatore', label: 'Coimbatore, Tamil Nadu' },
     { id: 'Mahabalipuram', label: 'Mahabalipuram, Tamil Nadu' },
     { id: 'Thanjavur', label: 'Thanjavur, Tamil Nadu' },
@@ -150,6 +153,8 @@ export const ExplorePage: React.FC<ExplorePageProps> = ({
     { id: 'Mumbai', label: 'Mumbai, Maharashtra' },
     { id: 'Delhi', label: 'Delhi NCR, India' },
     { id: 'Jaipur', label: 'Jaipur, Rajasthan' },
+    { id: 'Udaipur', label: 'Udaipur (City of Lakes), Rajasthan' },
+    { id: 'Amritsar', label: 'Amritsar (Golden Temple), Punjab' },
     { id: 'Kochi', label: 'Kochi, Kerala' },
     { id: 'Agra', label: 'Agra, Uttar Pradesh' },
     { id: 'Varanasi', label: 'Varanasi, Uttar Pradesh' },

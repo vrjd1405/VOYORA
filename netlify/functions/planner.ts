@@ -1,4 +1,5 @@
 import { GoogleGenAI, Type } from '@google/genai';
+import { getCuratedDiningForCity } from '../../server/src/services/curatedDiningData';
 
 interface DestinationCandidate {
   id: string;
@@ -29,6 +30,23 @@ function haversineDistanceKm(lat1: number, lon1: number, lat2: number, lon2: num
       Math.sin(dLon / 2);
   const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
   return Math.round(R * c * 10) / 10;
+}
+
+function calculateRoadTransit(
+  lat1: number,
+  lon1: number,
+  lat2: number,
+  lon2: number
+): { distanceKm: number; timeMin: number } {
+  const straightKm = haversineDistanceKm(lat1, lon1, lat2, lon2);
+  if (straightKm < 0.05) {
+    return { distanceKm: 0.1, timeMin: 3 };
+  }
+  // 1.30 road network detour factor for realistic street routing
+  const roadKm = Math.round(straightKm * 1.3 * 10) / 10;
+  const avgSpeedKmh = roadKm <= 4 ? 20 : roadKm <= 15 ? 25 : 35;
+  const timeMin = Math.max(4, Math.round((roadKm / avgSpeedKmh) * 60));
+  return { distanceKm: roadKm, timeMin };
 }
 
 async function resolveCityGeocode(city: string): Promise<{ lat: number; lng: number; cityName: string; countryName: string } | null> {
@@ -255,7 +273,7 @@ STRICT RULES:
 1. You MUST ONLY use the verified attractions provided below. Never introduce places from other cities.
 2. Group attractions geographically to minimize travel time.
 3. Assign each attraction to an optimal time slot: Morning, Afternoon, or Evening.
-4. Provide authentic regional culinary specialties for ${cityInfo.cityName}.
+4. Provide authentic regional culinary specialties for ${cityInfo.cityName}, specifically naming the dish AND famous authentic eateries/restaurants/food stalls in ${cityInfo.cityName} where travelers can taste it.
 5. Provide cultural etiquette guidelines specific to ${cityInfo.cityName}, ${cityInfo.countryName}.
 
 Verified Attractions in ${cityInfo.cityName}:
@@ -277,8 +295,13 @@ ${attractions.map(a => `- ID: "${a.id}", Name: "${a.name}", Category: "${a.categ
                   dish: { type: Type.STRING },
                   description: { type: Type.STRING },
                   bestTime: { type: Type.STRING },
+                  recommendedPlaces: {
+                    type: Type.ARRAY,
+                    items: { type: Type.STRING },
+                    description: 'Names of authentic restaurants, stalls, or bakeries in this city famous for this dish',
+                  },
                 },
-                required: ['dish', 'description', 'bestTime'],
+                required: ['dish', 'description', 'bestTime', 'recommendedPlaces'],
               },
             },
             days: {
@@ -367,14 +390,15 @@ ${attractions.map(a => `- ID: "${a.id}", Name: "${a.name}", Category: "${a.categ
           poolIndex++;
         }
 
-        // Real Haversine distance between consecutive stops
+        // Realistic road transit distance and duration between consecutive stops
         let transitFromPrevKm: number | undefined = undefined;
         let transitTimeMin: number | undefined = undefined;
 
         if (prevDest && dest) {
-          transitFromPrevKm = haversineDistanceKm(prevDest.lat, prevDest.lng, dest.lat, dest.lng);
+          const transit = calculateRoadTransit(prevDest.lat, prevDest.lng, dest.lat, dest.lng);
+          transitFromPrevKm = transit.distanceKm;
+          transitTimeMin = transit.timeMin;
           dayTransitKm += transitFromPrevKm;
-          transitTimeMin = Math.max(5, Math.round((transitFromPrevKm / 24) * 60));
         }
 
         dayItems.push({
@@ -413,11 +437,10 @@ ${attractions.map(a => `- ID: "${a.id}", Name: "${a.name}", Category: "${a.categ
         `Pre-booking tickets online is recommended for popular heritage sites during peak hours.`,
         `Keep local currency handy for artisanal bazaars and heritage food stalls.`,
       ],
-      diningHighlights: planData?.diningHighlights || [
-        { dish: `Signature ${cityInfo.cityName} Regional Breakfast`, description: 'Locally celebrated breakfast prepared with farm-fresh regional ingredients.', bestTime: 'Morning' },
-        { dish: `Heritage ${cityInfo.cityName} Specialty Course`, description: 'Revered culinary hallmark passed down through local generations.', bestTime: 'Lunch' },
-        { dish: `Artisan Street Delicacy`, description: 'Vibrant local flavors found in bustling evening markets and heritage food alleys.', bestTime: 'Evening' },
-      ],
+      diningHighlights:
+        planData?.diningHighlights && planData.diningHighlights.length > 0
+          ? planData.diningHighlights
+          : getCuratedDiningForCity(cityInfo.cityName),
     };
 
     // Store in cache for 30 minutes
